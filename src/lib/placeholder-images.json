@@ -1,0 +1,136 @@
+{
+  "placeholderImages": [
+    {
+      "id": "logo",
+      "description": "Global GoalGetters Logo",
+      "imageUrl": "https://images.unsplash.com/photo-1717548368707-4058da669d40?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxzb2NjZXIlMjBsb2dvfGVufDB8fHx8MTc2MjIwMjkyNnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "soccer logo"
+    },
+    {
+      "id": "hero",
+      "description": "A soccer stadium at night",
+      "imageUrl": "https://images.unsplash.com/photo-1489944440615-453fc2b6a9a9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxzb2NjZXIlMjBzdGFkaXVtfGVufDB8fHx8MTc2MjIxODI4Mnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "soccer stadium"
+    },
+    {
+      "id": "player1",
+      "description": "Portrait of a soccer player",
+      "imageUrl": "https://images.unsplash.com/photo-1670489520245-c41cb342a565?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxzb2NjZXIlMjBwbGF5ZXJ8ZW58MHx8fHwxNzYyMTgyMDM5fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "soccer player"
+    },
+    {
+      "id": "player2",
+      "description": "Portrait of a soccer player",
+      "imageUrl": "https://images.unsplash.com/photo-1670489520245-c41cb342a565?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxzb2NjZXIlMjBwbGF5ZXJ8ZW58MHx8fHwxNzYyMTgyMDM5fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "soccer player"
+    },
+    {
+      "id": "player3",
+      "description": "Portrait of a soccer player",
+      "imageUrl": "https://images.unsplash.com/photo-1602674809970-89073c530b0a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxzb2NjZXIlMjBwbGF5ZXJ8ZW58MHx8fHwxNzYyMTgyMDM5fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "soccer player"
+    },
+    {
+      "id": "player4",
+      "description": "Portrait of a soccer player",
+      "imageUrl": "https://images.unsplash.com/photo-1614170059029-3b7422659b37?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxzb2NjZXIlMjBwbGF5ZXJ8ZW58MHx8fHwxNzYyMTgyMDM5fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "soccer player"
+    },
+    {
+      "id": "player5",
+      "description": "Portrait of a soccer player",
+      "imageUrl": "https://images.unsplash.com/photo-1623451377886-36671ab29f50?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxzb2NjZXIlMjBwbGF5ZXJ8ZW58MHx8fHwxNzYyMTgyMDM5fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "soccer player"
+    },
+    {
+      "id": "player6",
+      "description": "Portrait of a soccer player",
+      "imageUrl": "https://images.unsplash.com/photo-1517466787929-bc90951d0974?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxzb2NjZXIlMjBwbGF5ZXJ8ZW58MHx8fHwxNzYyMTgyMDM5fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "soccer player"
+    },
+    {
+      "id": "player7",
+      "description": "Portrait of a soccer player",
+      "imageUrl": "https://images.unsplash.com/photo-1623451377886-36671ab29f50?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxzb2NjZXIlMjBwbGF5ZXJ8ZW58MHx8fHwxNzYyMTgyMDM5fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "soccer player"
+    },
+    {
+      "id": "player8",
+      "description": "Portrait of a soccer player",
+      "imageUrl": "https://images.unsplash.com/photo-1517466787929-bc90951d0974?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxzb2NjZXIlMjBwbGF5ZXJ8ZW58MHx8fHwxNzYyMTgyMDM5fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "soccer player"
+    },
+    {
+      "id": "player9",
+      "description": "Portrait of a soccer player",
+      "imageUrl": "https://images.unsplash.com/photo-1560272564-c83b66b1ad12?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxzb2NjZXIlMjBwbGF5ZXJ8ZW58MHx8fHwxNzYyMTgyMDM5fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "soccer player"
+    },
+    {
+      "id": "player10",
+      "description": "Portrait of a soccer player",
+      "imageUrl": "https://images.unsplash.com/photo-1517466787929-bc90951d0974?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxzb2NjZXIlMjBwbGF5ZXJ8ZW58MHx8fHwxNzYyMTgyMDM5fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "soccer player"
+    },
+    {
+      "id": "player11",
+      "description": "Portrait of a soccer player",
+      "imageUrl": "https://images.unsplash.com/photo-1602674809970-89073c530b0a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxzb2NjZXIlMjBwbGF5ZXJ8ZW58MHx8fHwxNzYyMTgyMDM5fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "soccer player"
+    },
+    {
+      "id": "player12",
+      "description": "Portrait of a soccer player",
+      "imageUrl": "https://images.unsplash.com/photo-1670489520245-c41cb342a565?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxzb2NjZXIlMjBwbGF5ZXJ8ZW58MHx8fHwxNzYyMTgyMDM5fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "soccer player"
+    },
+    {
+      "id": "player13",
+      "description": "Portrait of a soccer player",
+      "imageUrl": "https://images.unsplash.com/photo-1610736342165-4eeb4aef66ca?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxzb2NjZXIlMjBwbGF5ZXJ8ZW58MHx8fHwxNzYyMTgyMDM5fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "soccer player"
+    },
+    {
+      "id": "player14",
+      "description": "Portrait of a soccer player",
+      "imageUrl": "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxzb2NjZXIlMjBwbGF5ZXJ8ZW58MHx8fHwxNzYyMTgyMDM5fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "soccer player"
+    },
+    {
+      "id": "player15",
+      "description": "Portrait of a soccer player",
+      "imageUrl": "https://images.unsplash.com/photo-1610736342165-4eeb4aef66ca?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxzb2NjZXIlMjBwbGF5ZXJ8ZW58MHx8fHwxNzYyMTgyMDM5fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "soccer player"
+    },
+    {
+      "id": "avatar-default",
+      "description": "Default user avatar",
+      "imageUrl": "https://images.unsplash.com/photo-1568602471122-7832951cc4c5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHx1c2VyJTIwYXZhdGFyfGVufDB8fHx8MTc2MjIxNDcxMHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "user avatar"
+    },
+    {
+      "id": "item-jersey-1",
+      "description": "Blue and white striped jersey",
+      "imageUrl": "https://images.unsplash.com/photo-1662096909714-e2f206d0a636?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxzb2NjZXIlMjBqZXJzZXl8ZW58MHx8fHwxNzYyMjE4NjQ2fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "soccer jersey"
+    },
+    {
+      "id": "item-jersey-2",
+      "description": "Red and yellow jersey",
+      "imageUrl": "https://images.unsplash.com/photo-1629042335905-afce90477927?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxzb2NjZXIlMjBqZXJzZXl8ZW58MHx8fHwxNzYyMjE4NjQ2fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "soccer jersey"
+    },
+    {
+      "id": "item-boots-1",
+      "description": "Golden soccer boots",
+      "imageUrl": "https://images.unsplash.com/photo-1612387050635-f1f1ae387e64?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxzb2NjZXIlMjBib290c3xlbnwwfHx8fDE3NjIyMTg2NDZ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "soccer boots"
+    },
+    {
+      "id": "item-accessory-1",
+      "description": "Captain's armband",
+      "imageUrl": "https://images.unsplash.com/photo-1532288510239-f5a4e628aea1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxhcm1iYW5kfGVufDB8fHx8MTc2MjIxODY0N3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "armband"
+    }
+  ]
+}
