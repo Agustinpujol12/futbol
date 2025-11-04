@@ -1,8 +1,21 @@
+// app/(app)/matchups/page.tsx
+
+// 3. Forzar renderizado dinámico (Solución a error de Vercel)
+export const dynamic = 'force-dynamic'
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { user } from "@/lib/data";
+// import { user } from "@/lib/data"; // Desactivamos esto temporalmente
 import { PlaceHolderImages } from "@/lib/placeholder-images";
+import { cn } from "@/lib/utils"; // 4. Importación movida aquí
+
+// 2. Añadido un 'user' de prueba para evitar errores
+const user = {
+  name: 'Agustín', // Puedes cambiarlo por tu nombre
+  avatar: PlaceHolderImages.find(p => p.id === 'player1')?.imageUrl || '',
+  avatarHint: 'user avatar'
+};
 
 const matchups = [
   {
@@ -43,8 +56,6 @@ const StatusBadge = ({ status }: { status: 'In Progress' | 'Final' }) => {
   return <Badge variant={variant} className={cn('font-semibold', className)}>{status}</Badge>;
 }
 
-import { cn } from "@/lib/utils";
-
 export default function MatchupsPage() {
   return (
     <div className="container mx-auto">
@@ -80,12 +91,13 @@ export default function MatchupsPage() {
 
                 {/* Opponent */}
                 <div className="flex flex-col items-center gap-2">
-                   <Avatar className="h-20 w-20">
-                    <AvatarImage src={matchup.opponent.avatar} data-ai-hint={matchup.opponent.avatarHint} />
+                  <Avatar className="h-20 w-20">
+                    _**       <AvatarImage src={matchup.opponent.avatar} data-ai-hint={matchup.opponent.avatarHint} />
                     <AvatarFallback>{matchup.opponent.name.charAt(0)}</AvatarFallback>
                   </Avatar>
                   <p className="font-semibold">{matchup.opponent.name}</p>
-                  <p className="text-4xl font-bold text-foreground">{matchup.opponent.score.toFixed(1)}</p>
+                  {/* 1. ¡AQUÍ ESTÁ LA CORRECCIÓN! */}
+                  <p className="text-4xl font-bold text-foreground">{matchup.opponentScore.toFixed(1)}</p>
                 </div>
               </div>
             </CardContent>
