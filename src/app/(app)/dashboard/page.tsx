@@ -1,67 +1,59 @@
 // src/app/(app)/dashboard/page.tsx
 
-// --- 1. IMPORTACIONES DE TU CÓDIGO DE UI ---
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LineupBuilder } from "@/components/lineup/lineup-builder";
 import { StrategyCardManager } from "@/components/strategy/strategy-cards";
 import { CircleDollarSign } from "lucide-react";
 
-// --- 2. IMPORTACIONES DE LA LÓGICA DE SERVIDOR ---
 import { createClient } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-// Este es el formulario que crearemos en el próximo paso
 import WelcomeForm from './WelcomeForm'; 
 
-// Forzamos a que esta página NUNCA sea estática
 export const dynamic = 'force-dynamic';
 
-// --- 3. CONVERTIMOS LA PÁGINA EN ASYNC ---
 export default async function DashboardPage() {
   
-  // --- 4. LÓGICA DE AUTENTICACIÓN Y PERFIL ---
   const supabase = createClient();
 
-  // Obtener el usuario de la sesión
-  const { data: { session } } = await supabase.auth.getSession();
+  // --- ¡AQUÍ ESTÁ EL CAMBIO! ---
+  // Reemplazamos getSession() por getUser()
+  const { data: { user } } = await supabase.auth.getUser();
+  // --- FIN DEL CAMBIO ---
 
-  if (!session) {
+  if (!user) {
     redirect('/login'); // Redirige si no está logueado
   }
 
-  // Buscar el perfil del usuario en la base de datos
+  // Buscamos el perfil (ahora usando 'user.id')
   const { data: profile } = await supabase
     .from('profiles')
-    .select('username') // Solo necesitamos saber el username
-    .eq('id', session.user.id) // Buscamos por el ID del usuario logueado
-    .single(); // Esperamos solo una fila
+    .select('username')
+    .eq('id', user.id) // <-- Usamos user.id
+    .single();
 
   if (!profile) {
-    // Esto es un error grave (el trigger debería haberlo creado)
     return <div>Error: No se encontró el perfil. Contacta a soporte.</div>
   }
 
-  // --- 5. ¡LA LÓGICA CLAVE DE BIENVENIDA! ---
   if (profile.username === null) {
-    // Si el username está NULL, muestra el formulario de bienvenida
+    // Muestra el formulario de bienvenida
     return (
       <div className="container mx-auto py-8">
         <h1 className="text-3xl font-bold">¡Bienvenido a Global GoalGetters!</h1>
         <p className="text-muted-foreground mb-4">
           Necesitas crear un nombre de usuario para continuar.
         </p>
-        <WelcomeForm userId={session.user.id} />
+        <WelcomeForm userId={user.id} /> {/* <-- Pasamos user.id */}
       </div>
     );
   }
 
-  // --- 6. SI EL USUARIO YA TIENE PERFIL, MUESTRA TU UI ---
-  // (Este es el código que tú ya tenías, pero ahora con un saludo dinámico)
+  // Si el usuario ya tiene perfil, muestra la UI
   return (
     <div className="container mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
         <h1 className="text-3xl font-bold tracking-tight font-headline mb-2 sm:mb-0">
-          {/* ¡Hacemos el saludo dinámico! */}
           ¡Hola, {profile.username}!
         </h1>
         <div className="flex items-center gap-4">
