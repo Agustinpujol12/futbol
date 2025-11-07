@@ -34,3 +34,15 @@ export type DailySquad = {
   game_day_id: string;
   player_ids: string[]; // Array de IDs de jugadores
 }
+
+// --- ¡ESTO ES LO QUE FALTABA! ---
+// Definición de la tabla 'daily_lineups'
+export type DailyLineup = {
+  id: string;
+  created_at: string;
+  user_id: string;
+  league_id: string;
+  game_day_id: string;
+  final_selection_ids: string[]; // Array de 8 IDs
+  updated_at?: string; // (La columna que agregaste, es opcional)
+}
