@@ -2,10 +2,8 @@
 'use client';
 
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { FootballPitch } from "./FootballPitch"; // ¡Importamos la cancha SVG!
+import { FootballPitch } from "./FootballPitch";
 
-// --- Componente de Marcador de Posición para Perfil ---
 function ProfilePlaceholder({ title }: { title: string }) {
   return (
     <Card className="h-full">
@@ -22,7 +20,6 @@ function ProfilePlaceholder({ title }: { title: string }) {
   );
 }
 
-// --- Componente de Marcador de Posición para Jugador en Cancha ---
 function PitchPlayerSlot({ 
   position, 
   name, 
@@ -47,7 +44,6 @@ function PitchPlayerSlot({
             ? 'bg-destructive/20 border-destructive/50' 
             : 'bg-primary/20 border-primary/50'
         }`}>
-          {/* ¡CORRECCIÓN AQUÍ! Usamos 'position' y lo cortamos */}
           {position.slice(0, 3).toUpperCase()}
         </div>
         <span className="text-xs font-semibold bg-black/50 text-white px-1.5 py-0.5 rounded-md truncate w-full text-center">
@@ -58,39 +54,71 @@ function PitchPlayerSlot({
   );
 }
 
-// --- Componente Principal ---
+// 🧤 Suplentes
+function BenchPlayer({ name, position, isRival = false }: { name: string; position: string; isRival?: boolean }) {
+  return (
+    <div
+      className={`flex flex-col items-center w-[60px] ${
+        isRival ? "text-destructive" : "text-primary"
+      }`}
+    >
+      <div
+        className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border ${
+          isRival
+            ? "bg-destructive/20 border-destructive/50"
+            : "bg-primary/20 border-primary/50"
+        }`}
+      >
+        {position}
+      </div>
+      <span className="text-xs font-semibold mt-1">{name}</span>
+    </div>
+  );
+}
+
 export function MatchOfTheDay() {
-  
-  // --- ¡INICIO DE LA CORRECCIÓN EN DATOS DE MAQUETA! ---
-  // (Cambiamos 'pos:' por 'position:')
+
+  // ⚽ Cada equipo ahora ocupa solo su mitad del campo
   const myTeam = [
-    { position: "ARQ", name: "Dibu", top: "90%", left: "50%" },
-    { position: "DEF", name: "Cuti", top: "75%", left: "30%" },
-    { position: "DEF", name: "Nico T.", top: "75%", left: "70%" },
-    { position: "MED", name: "Enzo", top: "60%", left: "20%" },
-    { position: "MED", name: "Alexis", top: "60%", left: "50%" },
-    { position: "MED", name: "Wataru", top: "60%", left: "80%" },
-    { position: "DEL", name: "Messi", top: "52%", left: "35%" },
-    { position: "DEL", name: "Jamal", top: "52%", left: "65%" },
+    { position: "ARQ", name: "Dibu", top: "50%", left: "11%" },
+    { position: "DEF", name: "Cuti", top: "35%", left: "23%" },
+    { position: "DEF", name: "Nico T.", top: "65%", left: "23%" },
+    { position: "MED", name: "Enzo", top: "30%", left: "35%" },
+    { position: "MED", name: "Alexis", top: "50%", left: "35%" },
+    { position: "MED", name: "Wataru", top: "70%", left: "35%" },
+    { position: "DEL", name: "Messi", top: "40%", left: "46%" },
+    { position: "DEL", name: "Jamal", top: "60%", left: "46%" },
   ];
 
   const rivalTeam = [
-    { position: "ARQ", name: "Ochoa", top: "10%", left: "50%" },
-    { position: "DEF", name: "Ko Ita.", top: "25%", left: "30%" },
-    { position: "DEF", name: "Akanji", top: "25%", left: "70%" },
-    { position: "MED", name: "Luis C.", top: "40%", left: "20%" },
-    { position: "MED", name: "Ødegaard", top: "40%", left: "50%" },
-    { position: "MED", name: "Elneny", top: "40%", left: "80%" },
-    { position: "DEL", name: "Santi G.", top: "48%", left: "35%" },
-    { position: "DEL", name: "Salah", top: "48%", left: "65%" },
+    { position: "ARQ", name: "Ochoa", top: "50%", left: "89%" },
+    { position: "DEF", name: "Ko Ita.", top: "35%", left: "77%" },
+    { position: "DEF", name: "Akanji", top: "65%", left: "77%" },
+    { position: "MED", name: "Luis C.", top: "30%", left: "65%" },
+    { position: "MED", name: "Ødegaard", top: "50%", left: "65%" },
+    { position: "MED", name: "Elneny", top: "70%", left: "65%" },
+    { position: "DEL", name: "Santi G.", top: "40%", left: "54%" },
+    { position: "DEL", name: "Salah", top: "60%", left: "54%" },
   ];
-  // --- FIN DE LA CORRECCIÓN ---
+
+  const myBench = [
+    { position: "DEF", name: "Tagliafico" },
+    { position: "MED", name: "Lo Celso" },
+    { position: "DEL", name: "Garnacho" },
+    { position: "DEL", name: "Lautaro" },
+  ];
+
+  const rivalBench = [
+    { position: "DEF", name: "Stones" },
+    { position: "MED", name: "Pedri" },
+    { position: "DEL", name: "Mbappé" },
+    { position: "DEL", name: "Darwin" },
+  ];
 
   return (
-    // Grid principal de 3 columnas (se colapsa en móvil)
     <div className="grid grid-cols-1 xl:grid-cols-5 gap-4">
 
-      {/* --- 1. COLUMNA IZQUIERDA (MI PERFIL Y SUPLENTES) --- */}
+      {/* IZQUIERDA */}
       <div className="flex flex-col gap-4">
         <ProfilePlaceholder title="MI PERFIL (Agus95_Talleres)" />
         <Card>
@@ -111,42 +139,54 @@ export function MatchOfTheDay() {
         </Card>
       </div>
 
-      {/* --- 2. COLUMNA CENTRAL (LA CANCHA) --- */}
+      {/* CANCHA CENTRAL */}
       <div className="xl:col-span-3">
-        <Card className="h-full min-h-[700px] overflow-hidden">
+        <Card className="h-full min-h-[750px] overflow-hidden relative">
           <CardHeader>
             <CardTitle className="font-headline text-center">Duelo 1v1 - Fecha 1</CardTitle>
             <CardDescription className="text-center">
               Agus95_Talleres vs. Pepo_Mix
             </CardDescription>
           </CardHeader>
+
           <CardContent className="p-0 relative h-full">
-            {/* El fondo de la cancha SVG */}
-            <div className="absolute inset-0">
+            {/* Cancha horizontal */}
+            <div className="absolute inset-0 rotate-90 scale-[1.1] origin-center">
               <FootballPitch />
             </div>
-            
-            {/* Contenedor de jugadores (se pone encima del SVG) */}
+
+            {/* Jugadores */}
             <div className="relative h-full text-xs">
-              
-              {/* ¡CORRECCIÓN AQUÍ! 
-                  Ahora usamos 'p' directamente, pero el error
-                  real estaba en los datos de maqueta.
-              */}
               {myTeam.map(p => (
                 <PitchPlayerSlot key={p.name} {...p} />
               ))}
-              
               {rivalTeam.map(p => (
                 <PitchPlayerSlot key={p.name} {...p} isRival />
               ))}
-
             </div>
+
+            {/* 🧤 Suplentes fuera del campo */}
+            <div className="absolute bottom-2 left-0 w-full flex justify-between px-6">
+              {/* Suplentes de mi equipo (izquierda) */}
+              <div className="flex gap-3">
+                {myBench.map(p => (
+                  <BenchPlayer key={p.name} {...p} />
+                ))}
+              </div>
+
+              {/* Suplentes rival (derecha) */}
+              <div className="flex gap-3">
+                {rivalBench.map(p => (
+                  <BenchPlayer key={p.name} {...p} isRival />
+                ))}
+              </div>
+            </div>
+
           </CardContent>
         </Card>
       </div>
 
-      {/* --- 3. COLUMNA DERECHA (RIVAL Y CHAT) --- */}
+      {/* DERECHA */}
       <div className="flex flex-col gap-4">
         <ProfilePlaceholder title="PERFIL RIVAL (Pepo_Mix)" />
         <Card>
@@ -165,7 +205,6 @@ export function MatchOfTheDay() {
             <p>(Aquí irá la carta rival)</p>
           </CardContent>
         </Card>
-        {/* El chat ocupa el espacio restante */}
         <Card className="flex-grow min-h-[150px]">
           <CardHeader>
             <CardTitle className="font-headline text-lg text-center">CHAT DEL DUELO</CardTitle>
@@ -175,7 +214,6 @@ export function MatchOfTheDay() {
           </CardContent>
         </Card>
       </div>
-
     </div>
   );
 }
