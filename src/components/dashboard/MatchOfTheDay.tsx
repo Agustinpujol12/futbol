@@ -78,28 +78,29 @@ function BenchPlayer({ name, position, isRival = false }: { name: string; positi
 
 export function MatchOfTheDay() {
 
-  // ⚽ Cada equipo ahora ocupa solo su mitad del campo
-  const myTeam = [
-    { position: "ARQ", name: "Dibu", top: "50%", left: "11%" },
-    { position: "DEF", name: "Cuti", top: "35%", left: "23%" },
-    { position: "DEF", name: "Nico T.", top: "65%", left: "23%" },
-    { position: "MED", name: "Enzo", top: "30%", left: "35%" },
-    { position: "MED", name: "Alexis", top: "50%", left: "35%" },
-    { position: "MED", name: "Wataru", top: "70%", left: "35%" },
-    { position: "DEL", name: "Messi", top: "40%", left: "46%" },
-    { position: "DEL", name: "Jamal", top: "60%", left: "46%" },
-  ];
+  // ⚽ Cada equipo ocupa solo su mitad del campo (alineado con cancha más arriba)
+const myTeam = [
+  { position: "ARQ", name: "Dibu", top: "45%", left: "10%" },
+  { position: "DEF", name: "Cuti", top: "28%", left: "22%" },
+  { position: "DEF", name: "Nico T.", top: "55%", left: "22%" },
+  { position: "MED", name: "Enzo", top: "25%", left: "34%" },
+  { position: "MED", name: "Alexis", top: "42%", left: "34%" },
+  { position: "MED", name: "Wataru", top: "59%", left: "34%" },
+  { position: "DEL", name: "Messi", top: "35%", left: "46%" },
+  { position: "DEL", name: "Jamal", top: "52%", left: "46%" },
+];
 
-  const rivalTeam = [
-    { position: "ARQ", name: "Ochoa", top: "50%", left: "89%" },
-    { position: "DEF", name: "Ko Ita.", top: "35%", left: "77%" },
-    { position: "DEF", name: "Akanji", top: "65%", left: "77%" },
-    { position: "MED", name: "Luis C.", top: "30%", left: "65%" },
-    { position: "MED", name: "Ødegaard", top: "50%", left: "65%" },
-    { position: "MED", name: "Elneny", top: "70%", left: "65%" },
-    { position: "DEL", name: "Santi G.", top: "40%", left: "54%" },
-    { position: "DEL", name: "Salah", top: "60%", left: "54%" },
-  ];
+const rivalTeam = [
+  { position: "ARQ", name: "Ochoa", top: "45%", left: "90%" },
+  { position: "DEF", name: "Ko Ita.", top: "28%", left: "78%" },
+  { position: "DEF", name: "Akanji", top: "55%", left: "78%" },
+  { position: "MED", name: "Luis C.", top: "25%", left: "66%" },
+  { position: "MED", name: "Ødegaard", top: "42%", left: "66%" },
+  { position: "MED", name: "Elneny", top: "59%", left: "66%" },
+  { position: "DEL", name: "Santi G.", top: "35%", left: "54%" },
+  { position: "DEL", name: "Salah", top: "52%", left: "54%" },
+];
+
 
   const myBench = [
     { position: "DEF", name: "Tagliafico" },
@@ -116,19 +117,10 @@ export function MatchOfTheDay() {
   ];
 
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-5 gap-4">
-
+    <div className="grid grid-cols-1 xl:grid-cols-5 gap-4 mb-16">
       {/* IZQUIERDA */}
       <div className="flex flex-col gap-4">
         <ProfilePlaceholder title="MI PERFIL (Agus95_Talleres)" />
-        <Card>
-          <CardHeader>
-            <CardTitle className="font-headline text-lg text-center">MIS SUPLENTES (4)</CardTitle>
-          </CardHeader>
-          <CardContent className="text-center text-muted-foreground">
-            <p>(Aquí irán los 4 suplentes)</p>
-          </CardContent>
-        </Card>
         <Card>
           <CardHeader>
             <CardTitle className="font-headline text-lg text-center">MI CARTA</CardTitle>
@@ -140,8 +132,8 @@ export function MatchOfTheDay() {
       </div>
 
       {/* CANCHA CENTRAL */}
-      <div className="xl:col-span-3">
-        <Card className="h-full min-h-[750px] overflow-hidden relative">
+      <div className="xl:col-span-3 flex flex-col items-center">
+        <Card className="h-full min-h-[750px] overflow-hidden relative w-full">
           <CardHeader>
             <CardTitle className="font-headline text-center">Duelo 1v1 - Fecha 1</CardTitle>
             <CardDescription className="text-center">
@@ -150,8 +142,8 @@ export function MatchOfTheDay() {
           </CardHeader>
 
           <CardContent className="p-0 relative h-full">
-            {/* Cancha horizontal */}
-            <div className="absolute inset-0 rotate-90 scale-[1.1] origin-center">
+            {/* Cancha horizontal (más arriba) */}
+            <div className="absolute inset-0 rotate-90 scale-[1.1] origin-center translate-y-[-45px]">
               <FootballPitch />
             </div>
 
@@ -164,39 +156,28 @@ export function MatchOfTheDay() {
                 <PitchPlayerSlot key={p.name} {...p} isRival />
               ))}
             </div>
-
-            {/* 🧤 Suplentes fuera del campo */}
-            <div className="absolute bottom-2 left-0 w-full flex justify-between px-6">
-              {/* Suplentes de mi equipo (izquierda) */}
-              <div className="flex gap-3">
-                {myBench.map(p => (
-                  <BenchPlayer key={p.name} {...p} />
-                ))}
-              </div>
-
-              {/* Suplentes rival (derecha) */}
-              <div className="flex gap-3">
-                {rivalBench.map(p => (
-                  <BenchPlayer key={p.name} {...p} isRival />
-                ))}
-              </div>
-            </div>
-
           </CardContent>
         </Card>
+        {/* Suplentes debajo de la cancha */}
+        <div className="w-full flex justify-between mt-4 px-8">
+          {/* Suplentes de mi equipo (izquierda) */}
+          <div className="flex gap-3">
+            {myBench.map(p => (
+              <BenchPlayer key={p.name} {...p} />
+            ))}
+          </div>
+          {/* Suplentes rival (derecha) */}
+          <div className="flex gap-3">
+            {rivalBench.map(p => (
+              <BenchPlayer key={p.name} {...p} isRival />
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* DERECHA */}
       <div className="flex flex-col gap-4">
         <ProfilePlaceholder title="PERFIL RIVAL (Pepo_Mix)" />
-        <Card>
-          <CardHeader>
-            <CardTitle className="font-headline text-lg text-center">SUPLENTES RIVAL (4)</CardTitle>
-          </CardHeader>
-          <CardContent className="text-center text-muted-foreground">
-            <p>(Aquí irán los suplentes)</p>
-          </CardContent>
-        </Card>
         <Card>
           <CardHeader>
             <CardTitle className="font-headline text-lg text-center">CARTA RIVAL</CardTitle>
@@ -214,6 +195,7 @@ export function MatchOfTheDay() {
           </CardContent>
         </Card>
       </div>
+
     </div>
   );
 }
