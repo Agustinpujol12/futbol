@@ -39,56 +39,84 @@ function FullPlayerCard({
       <div className="flex items-center gap-3">
 
         {/* 1. LA FOTO DEL JUGADOR O LA SILUETA DEFAULT */}
-  <img
-    src={player.photo_url || "/assets/player_silhouette.png"}
-    alt={player.name || "Silueta de jugador"}
-    className="w-12 h-12 rounded-full bg-gray-700 object-cover"
-  />
+        <img
+          src={player.photo_url || "/assets/player_silhouette.png"}
+          alt={player.name || "Silueta de jugador"}
+          className="w-12 h-12 rounded-full bg-gray-700 object-cover"
+        />
 
         {/* 2. Contenedor para el texto (sin cambios) */}
-  <div className="flex-1">
-    <p className="font-bold">{player.name}</p>
-    <p className="text-sm text-muted-foreground">{player.teams?.name || "Equipo"}</p>
-    <p className="text-sm font-semibold">{player.position}</p>
-  </div>
-</div>
+        <div className="flex-1">
+          <p className="font-bold">{player.name}</p>
+          <p className="text-sm text-muted-foreground">{player.teams?.name || "Equipo"}</p>
+          <p className="text-sm font-semibold">{player.position}</p>
+        </div>
+      </div>
 
-<div className="absolute top-3 right-2 flex flex-col items-center gap-2">
-  <span
-    className={cn(
-      'text-xs px-2 py-1 rounded-md shadow-sm',
-      player.teams?.pot === 1 && 'bg-amber-200 text-amber-900',
-      player.teams?.pot === 2 && 'bg-gray-200 text-gray-900',
-      player.teams?.pot === 3 && 'bg-yellow-700 text-yellow-100',
-      player.teams?.pot === 4 && 'bg-lime-900 text-lime-100',
-      !player.teams?.pot && 'bg-zinc-200 text-zinc-900'
-    )}
-  >
-    Bombo {player.teams?.pot || 'N/A'}
-  </span>
+      <div className="absolute top-3 right-2 flex flex-col items-center gap-2">
+        <span
+          className={cn(
+            'text-xs px-2 py-1 rounded-md shadow-sm',
+            player.teams?.pot === 1 && 'bg-amber-200 text-amber-900',
+            player.teams?.pot === 2 && 'bg-gray-200 text-gray-900',
+            player.teams?.pot === 3 && 'bg-yellow-700 text-yellow-100',
+            player.teams?.pot === 4 && 'bg-lime-900 text-lime-100',
+            !player.teams?.pot && 'bg-zinc-200 text-zinc-900'
+          )}
+        >
+          Bombo {player.teams?.pot || 'N/A'}
+        </span>
 
-  <img
-    src={player.teams?.logo_url || 'https://placehold.co/24x24/27272A/FFF?text=?'}
-    alt={player.teams?.name || 'Equipo'}
-    className="w-10 h-10 rounded-full bg-gray-700 border shadow-md mt-1"
-  />
-</div>
+        <img
+          src={player.teams?.logo_url || 'https://placehold.co/24x24/27272A/FFF?text=?'}
+          alt={player.teams?.name || 'Equipo'}
+          className="w-10 h-10 rounded-full bg-gray-700 border shadow-md mt-1"
+        />
+      </div>
     </Card>
   );
 }
 
 // --- Card para jugador dentro del campo ---
 function PitchPlayerCard({ player, onRemove }: { player: Player; onRemove: () => void }) {
+  // 👉 Lógica para abreviar el nombre si es largo
+  const formatName = (name: string) => {
+    if (!name) return '';
+    const parts = name.trim().split(' ');
+    if (parts.length >= 2) {
+      return `${parts[0][0]}. ${parts.slice(1).join(' ')}`; // "R. Villagra"
+    }
+    return name;
+  };
+
   return (
     <div
-      className="bg-white text-gray-900 p-1 rounded-md text-center text-xs font-semibold cursor-pointer hover:bg-red-200 transition-colors"
+      className="relative flex flex-col items-center w-16 cursor-pointer group"
       onClick={onRemove}
     >
-      <p>{player.name.split(' ')[0]}</p>
-      <p className="text-gray-600 text-[10px]">{player.position.slice(0, 3).toUpperCase()}</p>
+      {/* Foto o silueta */}
+      <img
+        src={player.photo_url || '/assets/player_silhouette.png'}
+        alt={player.name}
+        className="w-10 h-10 rounded-full bg-gray-700 object-cover border-2 border-white shadow-md group-hover:border-red-500 transition-all"
+      />
+
+      {/* Nombre y posición */}
+      <div className="mt-1 text-center">
+        <p
+          className="text-white text-[11px] font-semibold bg-black/50 px-1.5 py-0.5 rounded w-full"
+          style={{ whiteSpace: 'nowrap' }}
+        >
+          {formatName(player.name)}
+        </p>
+        <p className="text-white text-[10px] font-bold" style={{ textShadow: '0 0 2px black' }}>
+          {player.position.slice(0, 3).toUpperCase()}
+        </p>
+      </div>
     </div>
   );
 }
+
 
 export function LineupBuilder({
   availablePlayers,
@@ -277,80 +305,112 @@ export function LineupBuilder({
             <CardDescription>Necesitas 1 ARQ, 2 DEF, 3 MED, 2 DEL.</CardDescription>
           </CardHeader>
           <Separator />
-          <CardContent className="p-0">
-            <div className="relative h-[520px] bg-green-700/80 border-b-2 border-white">
-              {/* Líneas de campo */}
-              <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-white -translate-y-1/2"></div>
-              <div className="absolute top-1/2 left-1/2 w-24 h-24 border-2 border-white rounded-full -translate-x-1/2 -translate-y-1/2"></div>
+<CardContent className="p-0">
+  <div
+    className="relative h-[520px] rounded-xl overflow-hidden shadow-lg"
+    style={{
+      background: `
+        repeating-linear-gradient(
+          to bottom,
+          #166534,
+          #166534 20px,
+          #15803d 20px,
+          #15803d 40px
+        )
+      `,
+      border: '3px solid white',
+    }}
+  >
+    {/* Líneas principales */}
+<div className="absolute top-1/2 left-0 right-0 h-[2px] bg-white/90 -translate-y-1/2"></div>
+<div className="absolute top-1/2 left-1/2 w-28 h-28 border-[3px] border-white rounded-full -translate-x-1/2 -translate-y-1/2"></div>
 
-              {/* Área chica */}
-              <div className="absolute bottom-0 left-1/2 w-[80%] h-[100px] border-t-2 border-l-2 border-r-2 border-white -translate-x-1/2 rounded-t-lg"></div>
-              <div className="absolute bottom-0 left-1/2 w-[40%] h-[40px] border-t-2 border-l-2 border-r-2 border-white -translate-x-1/2 rounded-t-lg"></div>
-              <div className="absolute bottom-0 left-1/2 w-[20%] h-[10px] border-t-2 border-l-2 border-r-2 border-white -translate-x-1/2 rounded-t-lg bg-gray-900"></div>
+{/* ÁREA RIVAL */}
+<div className="absolute top-0 left-1/2 w-[80%] h-[120px] border-b-[3px] border-l-[3px] border-r-[3px] border-white -translate-x-1/2 rounded-b-[10px]"></div>
+<div className="absolute top-0 left-1/2 w-[40%] h-[60px] border-b-[3px] border-l-[3px] border-r-[3px] border-white -translate-x-1/2 rounded-b-[6px]"></div>
 
-              {/* ARQUERO */}
-              <div className="absolute bottom-[20px] left-1/2 -translate-x-1/2 w-24 h-16 flex justify-center items-center">
-                {gkSelected[0] ? (
-                  <PitchPlayerCard player={gkSelected[0]} onRemove={() => handleSelectPlayer(gkSelected[0])} />
-                ) : (
-                  <div className="bg-white/20 text-white p-1 rounded-md text-center text-xs w-20 h-10 flex items-center justify-center">
-                    ARQ ({gkCount}/{MAX_GK})
-                  </div>
-                )}
-              </div>
+{/* Arco rival */}
+<div className="absolute top-[0px] left-1/2 w-[16%] h-[12px] bg-neutral-900 border-[2px] border-white -translate-x-1/2 rounded-b-[4px]"></div>
 
-              {/* DEFENSORES */}
-              <div className="absolute bottom-[100px] left-0 right-0 h-16 flex justify-center items-center gap-4">
-                {defSelected.map((player) => (
-                  <PitchPlayerCard key={player.id} player={player} onRemove={() => handleSelectPlayer(player)} />
-                ))}
-                {Array(MAX_DEF - defCount)
-                  .fill(0)
-                  .map((_, i) => (
-                    <div
-                      key={`def-slot-${i}`}
-                      className="bg-white/20 text-white p-1 rounded-md text-center text-xs w-20 h-10 flex items-center justify-center"
-                    >
-                      DEF ({defCount}/{MAX_DEF})
-                    </div>
-                  ))}
-              </div>
+{/* Círculo penal rival */}
+<div className="absolute top-[120px] left-1/2 w-[80px] h-[40px] border-b-[3px] border-white border-t-0 rounded-b-[80px] -translate-x-1/2"></div>
 
-              {/* MEDIOCAMPISTAS */}
-              <div className="absolute bottom-[250px] left-0 right-0 h-16 flex justify-center items-center gap-4">
-                {midSelected.map((player) => (
-                  <PitchPlayerCard key={player.id} player={player} onRemove={() => handleSelectPlayer(player)} />
-                ))}
-                {Array(MAX_MID - midCount)
-                  .fill(0)
-                  .map((_, i) => (
-                    <div
-                      key={`mid-slot-${i}`}
-                      className="bg-white/20 text-white p-1 rounded-md text-center text-xs w-20 h-10 flex items-center justify-center"
-                    >
-                      MED ({midCount}/{MAX_MID})
-                    </div>
-                  ))}
-              </div>
+{/* ÁREA PROPIA */}
+<div className="absolute bottom-0 left-1/2 w-[80%] h-[120px] border-t-[3px] border-l-[3px] border-r-[3px] border-white -translate-x-1/2 rounded-t-[10px]"></div>
+<div className="absolute bottom-0 left-1/2 w-[40%] h-[60px] border-t-[3px] border-l-[3px] border-r-[3px] border-white -translate-x-1/2 rounded-t-[6px]"></div>
 
-              {/* DELANTEROS */}
-              <div className="absolute bottom-[400px] left-0 right-0 h-16 flex justify-center items-center gap-4">
-                {fwdSelected.map((player) => (
-                  <PitchPlayerCard key={player.id} player={player} onRemove={() => handleSelectPlayer(player)} />
-                ))}
-                {Array(MAX_FWD - fwdCount)
-                  .fill(0)
-                  .map((_, i) => (
-                    <div
-                      key={`fwd-slot-${i}`}
-                      className="bg-white/20 text-white p-1 rounded-md text-center text-xs w-20 h-10 flex items-center justify-center"
-                    >
-                      DEL ({fwdCount}/{MAX_FWD})
-                    </div>
-                  ))}
-              </div>
-            </div>
-          </CardContent>
+{/* Arco propio */}
+<div className="absolute bottom-[0px] left-1/2 w-[16%] h-[12px] bg-neutral-900 border-[2px] border-white -translate-x-1/2 rounded-t-[4px]"></div>
+
+{/* Círculo penal propio */}
+<div className="absolute bottom-[120px] left-1/2 w-[80px] h-[40px] border-t-[3px] border-white border-b-0 rounded-t-[80px] -translate-x-1/2"></div>
+
+
+    {/* 🧤 ARQUERO */}
+    <div className="absolute bottom-[25px] left-1/2 -translate-x-1/2 flex justify-center items-center">
+      {gkSelected[0] ? (
+        <PitchPlayerCard player={gkSelected[0]} onRemove={() => handleSelectPlayer(gkSelected[0])} />
+      ) : (
+        <div className="bg-white/20 text-white p-1 rounded-md text-center text-xs w-20 h-10 flex items-center justify-center">
+          ARQ ({gkCount}/{MAX_GK})
+        </div>
+      )}
+    </div>
+
+    {/* DEFENSORES */}
+    <div className="absolute bottom-[120px] left-0 right-0 flex justify-center items-center gap-6">
+      {defSelected.map((player) => (
+        <PitchPlayerCard key={player.id} player={player} onRemove={() => handleSelectPlayer(player)} />
+      ))}
+      {Array(MAX_DEF - defCount)
+        .fill(0)
+        .map((_, i) => (
+          <div
+            key={`def-slot-${i}`}
+            className="bg-white/20 text-white p-1 rounded-md text-center text-xs w-20 h-10 flex items-center justify-center"
+          >
+            DEF ({defCount}/{MAX_DEF})
+          </div>
+        ))}
+    </div>
+
+    {/* MEDIOCAMPISTAS */}
+    <div className="absolute bottom-[260px] left-0 right-0 flex justify-center items-center gap-6">
+      {midSelected.map((player) => (
+        <PitchPlayerCard key={player.id} player={player} onRemove={() => handleSelectPlayer(player)} />
+      ))}
+      {Array(MAX_MID - midCount)
+        .fill(0)
+        .map((_, i) => (
+          <div
+            key={`mid-slot-${i}`}
+            className="bg-white/20 text-white p-1 rounded-md text-center text-xs w-20 h-10 flex items-center justify-center"
+          >
+            MED ({midCount}/{MAX_MID})
+          </div>
+        ))}
+    </div>
+
+    {/* DELANTEROS */}
+    <div className="absolute bottom-[410px] left-0 right-0 flex justify-center items-center gap-6">
+      {fwdSelected.map((player) => (
+        <PitchPlayerCard key={player.id} player={player} onRemove={() => handleSelectPlayer(player)} />
+      ))}
+      {Array(MAX_FWD - fwdCount)
+        .fill(0)
+        .map((_, i) => (
+          <div
+            key={`fwd-slot-${i}`}
+            className="bg-white/20 text-white p-1 rounded-md text-center text-xs w-20 h-10 flex items-center justify-center"
+          >
+            DEL ({fwdCount}/{MAX_FWD})
+          </div>
+        ))}
+    </div>
+  </div>
+</CardContent>
+
+
           <Separator />
           <CardFooter className="p-4">
             <Button
