@@ -1,13 +1,13 @@
-// src/app/(app)/dashboard/types.ts
-
-// Definición de la tabla 'teams'
+// --- Tabla 'teams' ---
 export type Team = {
   id: string;
   name: string;
   pot: number;
-}
+  photo_url: string | null; // Logo del equipo (opcional)
+  logo_url: string | null;
+};
 
-// Definición de la tabla 'players' (con el equipo anidado)
+// --- Tabla 'players' ---
 export type Player = {
   id: string;
   created_at: string;
@@ -15,34 +15,34 @@ export type Player = {
   position: 'Arquero' | 'Defensor' | 'Mediocampista' | 'Delantero';
   status: 'Titular' | 'Suplente';
   team_id: string;
-  teams: Team; // El objeto 'team' anidado que pedimos
-}
+  photo_url: string | null; // ✅ Agregada: imagen del jugador
+  teams: Team; // Relación: equipo del jugador
+};
 
-// Definición de la tabla 'game_days'
+// --- Tabla 'game_days' ---
 export type GameDay = {
   id: string;
   match_date: string;
-  teams_playings: string[]; // Array de IDs de equipos
-}
+  teams_playings: string[];
+};
 
-// Definición de la tabla 'daily_squads'
+// --- Tabla 'daily_squads' ---
 export type DailySquad = {
   id: string;
   created_at: string;
   user_id: string;
   league_id: string;
   game_day_id: string;
-  player_ids: string[]; // Array de IDs de jugadores
-}
+  player_ids: string[];
+};
 
-// --- ¡ESTO ES LO QUE FALTABA! ---
-// Definición de la tabla 'daily_lineups'
+// --- Tabla 'daily_lineups' ---
 export type DailyLineup = {
   id: string;
   created_at: string;
   user_id: string;
   league_id: string;
   game_day_id: string;
-  final_selection_ids: string[]; // Array de 8 IDs
-  updated_at?: string; // (La columna que agregaste, es opcional)
-}
+  final_selection_ids: string[];
+  updated_at?: string;
+};

@@ -18,50 +18,61 @@ interface LineupBuilderProps {
   initialSelectedIds: string[];
 }
 
-// --- Card de Jugador en la lista (¡ACTUALIZADA!) ---
-function FullPlayerCard({ player, onSelect, isSelected }: { player: Player; onSelect: () => void; isSelected: boolean }) {
+// --- Card de Jugador en la lista ---
+function FullPlayerCard({
+  player,
+  onSelect,
+  isSelected,
+}: {
+  player: Player;
+  onSelect: () => void;
+  isSelected: boolean;
+}) {
   return (
     <Card
       className={cn(
-        'p-4 cursor-pointer relative', // Mantenemos tu padding
-        isSelected ? 'border-primary ring-2 ring-primary' : 'border-border',
-        isSelected && 'opacity-60'
+        'p-4 cursor-pointer relative transition-all',
+        isSelected ? 'border-primary ring-2 ring-primary opacity-60' : 'border-border'
       )}
       onClick={onSelect}
     >
-      {/* --- ¡INICIO DEL CAMBIO! Contenedor Flex para logo + texto --- */}
       <div className="flex items-center gap-3">
 
-        {/* 1. EL LOGO DEL EQUIPO */}
-        <img
-          // Usamos el logo_url, o un placeholder si es nulo
-          src={player.teams?.logo_url || 'https://placehold.co/40x40/27272A/FFF?text=?'}
-          alt={player.teams?.name || 'Equipo'}
-          className="w-10 h-10 rounded-full bg-gray-700 border" // 'border' por si el logo es blanco
-        />
+        {/* 1. LA FOTO DEL JUGADOR O LA SILUETA DEFAULT */}
+  <img
+    src={player.photo_url || "/assets/player_silhouette.png"}
+    alt={player.name || "Silueta de jugador"}
+    className="w-12 h-12 rounded-full bg-gray-700 object-cover"
+  />
 
-        {/* 2. Contenedor para el texto */}
-        <div className="flex-1">
-          <p className="font-bold">{player.name}</p>
-          {/* Ahora 'player.teams.name' debería funcionar */}
-          <p className="text-sm text-muted-foreground">{player.teams?.name || 'Equipo'}</p>
-          <p className="text-sm font-semibold">{player.position}</p>
-        </div>
-      </div>
-      {/* --- FIN DEL CAMBIO --- */}
+        {/* 2. Contenedor para el texto (sin cambios) */}
+  <div className="flex-1">
+    <p className="font-bold">{player.name}</p>
+    <p className="text-sm text-muted-foreground">{player.teams?.name || "Equipo"}</p>
+    <p className="text-sm font-semibold">{player.position}</p>
+  </div>
+</div>
 
-      {/* 3. El Bombo (se queda igual) */}
-      <span
-        className={cn(
-          'text-xs p-1 rounded absolute top-2 right-2',
-          player.teams?.pot === 1 && 'bg-amber-200 text-amber-900',
-          player.teams?.pot === 2 && 'bg-gray-200 text-gray-900',
-          !player.teams?.pot && 'bg-zinc-200 text-zinc-900'
-        )}
-      >
-        {/* Ahora 'player.teams.pot' debería funcionar */}
-        Bombo {player.teams?.pot || 'N/A'}
-      </span>
+<div className="absolute top-3 right-2 flex flex-col items-center gap-2">
+  <span
+    className={cn(
+      'text-xs px-2 py-1 rounded-md shadow-sm',
+      player.teams?.pot === 1 && 'bg-amber-200 text-amber-900',
+      player.teams?.pot === 2 && 'bg-gray-200 text-gray-900',
+      player.teams?.pot === 3 && 'bg-yellow-700 text-yellow-100',
+      player.teams?.pot === 4 && 'bg-lime-900 text-lime-100',
+      !player.teams?.pot && 'bg-zinc-200 text-zinc-900'
+    )}
+  >
+    Bombo {player.teams?.pot || 'N/A'}
+  </span>
+
+  <img
+    src={player.teams?.logo_url || 'https://placehold.co/24x24/27272A/FFF?text=?'}
+    alt={player.teams?.name || 'Equipo'}
+    className="w-10 h-10 rounded-full bg-gray-700 border shadow-md mt-1"
+  />
+</div>
     </Card>
   );
 }
@@ -231,7 +242,9 @@ export function LineupBuilder({
       <div className="lg:col-span-2">
         <Card>
           <CardHeader>
-            <CardTitle className="font-headline">Tu Plantilla Sorteada ({availablePlayers.length})</CardTitle>
+            <CardTitle className="font-headline">
+              Tu Plantilla Sorteada ({availablePlayers.length})
+            </CardTitle>
             <CardDescription>
               Estos son los 12 jugadores que te tocaron para el {gameDay.match_date}. Haz clic para moverlos a tu
               alineación.
@@ -265,11 +278,12 @@ export function LineupBuilder({
           </CardHeader>
           <Separator />
           <CardContent className="p-0">
-            {/* --- Campo de fútbol --- */}
             <div className="relative h-[520px] bg-green-700/80 border-b-2 border-white">
-              {/* Líneas y áreas */}
+              {/* Líneas de campo */}
               <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-white -translate-y-1/2"></div>
               <div className="absolute top-1/2 left-1/2 w-24 h-24 border-2 border-white rounded-full -translate-x-1/2 -translate-y-1/2"></div>
+
+              {/* Área chica */}
               <div className="absolute bottom-0 left-1/2 w-[80%] h-[100px] border-t-2 border-l-2 border-r-2 border-white -translate-x-1/2 rounded-t-lg"></div>
               <div className="absolute bottom-0 left-1/2 w-[40%] h-[40px] border-t-2 border-l-2 border-r-2 border-white -translate-x-1/2 rounded-t-lg"></div>
               <div className="absolute bottom-0 left-1/2 w-[20%] h-[10px] border-t-2 border-l-2 border-r-2 border-white -translate-x-1/2 rounded-t-lg bg-gray-900"></div>
