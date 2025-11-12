@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Logo } from '@/components/icons'; // Asumo que este componente existe
+import { Logo } from '@/components/icons';
 import { createClient } from '@/lib/supabase/server';
 import LogoutButton from './LogoutButton';
 
@@ -9,63 +9,82 @@ export async function Header() {
   const { data: { user } } = await supabase.auth.getUser();
 
   return (
-    <header className="container mx-auto px-4 sm:px-6 lg:px-8 h-20 grid grid-cols-3 items-center border-b">
-      
-      {/* --- COLUMNA 1: LOGO (Izquierda) --- */}
-      <div className="flex justify-start">
-        <Link 
-          href="/" 
-          className="flex items-center gap-2"
-          aria-label="Volver a la página de inicio"
-        >
-          <Logo className="h-8 w-8 text-primary" />
-          <h1 className="text-2xl font-headline font-bold text-foreground">
-            Global GoalGetters
-          </h1>
-        </Link>
-      </div>
+    <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/60 shadow-md">
+      <div className="container mx-auto px-6 sm:px-8 lg:px-12 h-24 grid grid-cols-3 items-center">
+        {/* --- IZQUIERDA: LOGO --- */}
+        <div className="flex justify-start items-center">
+          <Link
+            href="/"
+            className="flex items-center gap-4 group"
+            aria-label="Volver a la página de inicio"
+          >
+            <Logo className="h-12 w-12 text-primary transition-transform duration-300 group-hover:rotate-6" />
+            <h1 className="text-3xl font-headline font-extrabold text-foreground tracking-tight transition-colors group-hover:text-primary">
+              Global GoalGetters
+            </h1>
+          </Link>
+        </div>
 
-      {/* --- COLUMNA 2: NAVEGACIÓN (Centro) --- */}
-      <nav className="flex justify-center gap-2">
-        {/* Estos links solo aparecen si el usuario está logueado */}
-        {user && (
-          <>
-            <Button asChild variant="ghost">
-              <Link href="/">Inicio</Link>
-            </Button>
-            <Button asChild variant="ghost">
-              <Link href="/leagues">Leagues</Link>
-            </Button>
-            <Button asChild variant="ghost">
-              <Link href="/dashboard">Dashboard</Link>
-            </Button>
-          </>
-        )}
-      </nav>
+        {/* --- CENTRO: NAVEGACIÓN --- */}
+        <nav className="flex justify-center gap-5">
+          {user && (
+            <>
+              <Button
+                asChild
+                variant="ghost"
+                className="font-medium text-base text-muted-foreground hover:text-primary hover:bg-primary/10 transition"
+              >
+                <Link href="/">Inicio</Link>
+              </Button>
+              <Button
+                asChild
+                variant="ghost"
+                className="font-medium text-base text-muted-foreground hover:text-primary hover:bg-primary/10 transition"
+              >
+                <Link href="/leagues">Ligas</Link>
+              </Button>
+              <Button
+                asChild
+                variant="ghost"
+                className="font-medium text-base text-muted-foreground hover:text-primary hover:bg-primary/10 transition"
+              >
+                <Link href="/dashboard">Dashboard</Link>
+              </Button>
+            </>
+          )}
+        </nav>
 
-      {/* --- COLUMNA 3: USUARIO / AUTH (Derecha) --- */}
-      <div className="flex justify-end items-center gap-2">
-        {user ? (
-          // Si el usuario SÍ está logueado
-          <>
-            <span className="text-sm hidden sm:inline text-muted-foreground">
-              ¡Hola, {user.email?.split('@')[0]}!
-            </span>
-            <LogoutButton />
-          </>
-        ) : (
-          // Si el usuario NO está logueado
-          <>
-            <Button asChild variant="ghost">
-              <Link href="/login">Iniciar sesión</Link>
-            </Button>
-            <Button asChild>
-              <Link href="/login">Registrarse</Link>
-            </Button>
-          </>
-        )}
+        {/* --- DERECHA: USUARIO / AUTH --- */}
+        <div className="flex justify-end items-center gap-4">
+          {user ? (
+            <>
+              <span className="text-base hidden sm:inline text-muted-foreground">
+                Hola,{' '}
+                <span className="font-semibold text-foreground">
+                  {user.email?.split('@')[0]}
+                </span>
+              </span>
+              <LogoutButton />
+            </>
+          ) : (
+            <>
+              <Button
+                asChild
+                variant="ghost"
+                className="text-base font-medium text-muted-foreground hover:text-primary hover:bg-primary/10 transition"
+              >
+                <Link href="/login">Iniciar sesión</Link>
+              </Button>
+              <Button
+                asChild
+                className="bg-primary text-white text-base px-5 py-2.5 hover:bg-primary/90 transition"
+              >
+                <Link href="/login">Registrarse</Link>
+              </Button>
+            </>
+          )}
+        </div>
       </div>
-      
     </header>
   );
 }
