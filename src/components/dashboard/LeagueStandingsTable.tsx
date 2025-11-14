@@ -8,28 +8,48 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
+} from '@/components/ui/table';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardDescription,
+} from '@/components/ui/card';
+import { type Profile } from '@/app/(app)/dashboard/types'; // Importamos el tipo Profile
 
-// --- DATOS DE MAQUETA (MOCKUP) ---
-// (Más adelante, estos datos vendrán de la base de datos)
-const mockStandings = [
-  { id: 1, teamName: 'Agus95_Talleres', pts: 12, pj: 5, v: 4, e: 0, p: 1, df: 150 },
-  { id: 2, teamName: 'Pepo_Mix', pts: 10, pj: 5, v: 3, e: 1, p: 1, df: 120 },
-  { id: 3, teamName: 'ElRayo', pts: 9, pj: 5, v: 3, e: 0, p: 2, df: 50 },
-  { id: 4, teamName: 'Mistica_Copera', pts: 7, pj: 5, v: 2, e: 1, p: 2, df: -10 },
-  { id: 5, teamName: 'LosMagios', pts: 1, pj: 5, v: 0, e: 1, p: 4, df: -120 },
-  // ... (En el futuro, aquí irán los 34 equipos)
-];
-// --- FIN DE DATOS DE MAQUETA ---
+// --- 1. DEFINIMOS LA INTERFAZ DE PROPS ---
+// (usamos 'any' para 'team' por ahora, ya que no tenemos las columnas de stats)
+interface StandingsProps {
+  standings: any[];
+  currentUserProfile: Profile | null;
+  leagueName: string | null;
+}
 
-export function LeagueStandingsTable() {
+// --- 2. EL COMPONENTE AHORA RECIBE PROPS ---
+export function LeagueStandingsTable({
+  standings,
+  currentUserProfile,
+  leagueName,
+}: StandingsProps) {
+  
+  // Función helper para obtener el username de forma segura
+  const getUsername = (team: any) => {
+    if (team.profiles && team.profiles.username) {
+      return team.profiles.username;
+    }
+    return 'Usuario...';
+  };
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="font-headline">Tabla de Posiciones - Liga "Pozo $5"</CardTitle>
+        {/* --- 3. TÍTULO DINÁMICO --- */}
+        <CardTitle className="font-headline">
+          Tabla de Posiciones - {leagueName || 'Liga'}
+        </CardTitle>
         <CardDescription>
-          Clasificación de tu liga de 34 equipos.
+          Clasificación de tu liga.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -47,18 +67,30 @@ export function LeagueStandingsTable() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {mockStandings.map((team, index) => (
-              <TableRow key={team.id} className={team.teamName === 'Agus95_Talleres' ? 'bg-primary/10' : ''}>
-                <TableCell className="font-medium">{index + 1}</TableCell>
-                <TableCell className="font-medium">{team.teamName}</TableCell>
-                <TableCell className="text-right font-bold">{team.pts}</TableCell>
-                <TableCell className="text-right">{team.pj}</TableCell>
-                <TableCell className="text-right">{team.v}</TableCell>
-                <TableCell className="text-right">{team.e}</TableCell>
-                <TableCell className="text-right">{team.p}</TableCell>
-                <TableCell className="text-right">{team.df}</TableCell>
-              </TableRow>
-            ))}
+            {/* --- 4. MAPEO SOBRE LOS DATOS REALES (PROPS) --- */}
+            {standings.map((team, index) => {
+              const username = getUsername(team);
+              return (
+                <TableRow
+                  key={team.user_id}
+                  className={
+                    username === currentUserProfile?.username
+                      ? 'bg-primary/10'
+                      : ''
+                  }
+                >
+                  <TableCell className="font-medium">{index + 1}</TableCell>
+                  <TableCell className="font-medium">{username}</TableCell>
+                  {/* --- 5. DATOS DE STATS (EN 0 POR AHORA) --- */}
+                  <TableCell className="text-right font-bold">{team.pts || 0}</TableCell>
+                  <TableCell className="text-right">{team.pj || 0}</TableCell>
+                  <TableCell className="text-right">{team.v || 0}</TableCell>
+                  <TableCell className="text-right">{team.e || 0}</TableCell>
+                  <TableCell className="text-right">{team.p || 0}</TableCell>
+                  <TableCell className="text-right">{team.df || 0}</TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </CardContent>

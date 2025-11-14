@@ -24,6 +24,7 @@ export type GameDay = {
   id: string;
   match_date: string;
   teams_playings: string[];
+  match_day_number: number; // <-- ¡AÑADE ESTA LÍNEA!
 };
 
 // --- Tabla 'daily_squads' ---
