@@ -45,4 +45,11 @@ export type DailyLineup = {
   game_day_id: string;
   final_selection_ids: string[];
   updated_at?: string;
+  
+};
+
+export type Profile = {
+  id: string;
+  username: string | null;
+  // ... (cualquier otro campo que tengas)
 };
