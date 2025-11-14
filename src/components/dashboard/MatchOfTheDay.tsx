@@ -1,5 +1,5 @@
 // src/components/dashboard/MatchOfTheDay.tsx
-// --- ARCHIVO FINAL CON RIVAL DINÁMICO ---
+// --- ARCHIVO ACTUALIZADO (CORRECCIÓN DE ANCLAJE DE ICONOS Y ANCHO DE SUPLENTES) ---
 
 'use client';
 
@@ -17,7 +17,6 @@ import {
   type Profile,
 } from '@/app/(app)/dashboard/types';
 
-// (Tu función formatName no cambia)
 const formatName = (name: string) => {
   if (!name) return '---';
   const parts = name.trim().split(' ');
@@ -25,7 +24,6 @@ const formatName = (name: string) => {
   return name;
 };
 
-// (Tu componente ProfilePlaceholder no cambia)
 function ProfilePlaceholder({ title }: { title: string }) {
   return (
     <Card className="h-full">
@@ -40,19 +38,57 @@ function ProfilePlaceholder({ title }: { title: string }) {
   );
 }
 
-// (Tu componente PitchPlayerSlot no cambia)
-function PitchPlayerSlot({ position, name, photo_url, top, left, isRival = false }: { position: string; name: string; photo_url: string | null | undefined; top: string; left: string; isRival?: boolean; }) {
+// --- PitchPlayerSlot (MODIFICADO) ---
+function PitchPlayerSlot({ position, name, photo_url, top, left, isRival = false, teamLogoUrl }: { position: string; name: string; photo_url: string | null | undefined; top: string; left: string; isRival?: boolean; teamLogoUrl: string | null | undefined; }) {
   return (
-    <div className="absolute" style={{ top: `calc(${top} - 25px)`, left: `calc(${left} - 30px)` }}>
-      <div className="flex flex-col items-center w-[60px]">
-        {photo_url ? (
-          <img src={photo_url} alt={name} className={`w-8 h-8 rounded-full object-cover border-2 ${isRival ? 'border-destructive/50' : 'border-primary/50'}`} />
-        ) : (
-          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border ${isRival ? 'bg-destructive/20 border-destructive/50' : 'bg-primary/20 border-primary/50'}`}>
-            {position.slice(0, 3).toUpperCase()}
+    <div
+      className="absolute"
+      style={{
+        top: `calc(${top} - 25px)`,
+        left: `${left}`,
+        transform: 'translateX(-50%)' 
+      }}
+    >
+      {/* --- ⬇️ CAMBIO: Se quitó 'relative' de este div ⬇️ --- */}
+      <div className="flex flex-col items-center">
+        
+        {/* --- ⬇️ NUEVO: 'div' con 'relative' que solo envuelve el avatar y los iconos ⬇️ --- */}
+        <div className="relative">
+          {teamLogoUrl && (
+              <img
+                  src={teamLogoUrl}
+                  alt="Team Logo"
+                  className="absolute -top-1 -left-1 w-4 h-4 rounded-full object-cover border border-gray-300 bg-white shadow-sm z-10"
+              />
+          )}
+          <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-zinc-700 text-white text-xs font-semibold flex items-center justify-center z-10 border border-gray-300 shadow-sm">
+              -
           </div>
-        )}
-        <span className="text-xs font-semibold bg-black/50 text-white px-1.5 py-0.5 rounded-md truncate w-full text-center">
+
+          {/* El avatar/fallback va DENTRO del nuevo div relative */}
+          {photo_url ? (
+            <img
+              src={photo_url}
+              alt={name}
+              className={`w-10 h-10 rounded-full object-cover border-2 ${
+                isRival ? 'border-destructive/50' : 'border-primary/50'
+              }`}
+            />
+          ) : (
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold border ${
+                isRival
+                  ? 'bg-destructive/20 border-destructive/50'
+                  : 'bg-primary/20 border-primary/50'
+              }`}
+            >
+              {position.slice(0, 3).toUpperCase()}
+            </div>
+          )}
+        </div>
+        {/* --- ⬆️ Fin del nuevo 'div' relative ⬆️ --- */}
+
+        {/* El nombre ahora es hermano del 'div' de arriba, no de los iconos */}
+        <span className="text-xs font-semibold bg-black/50 text-white px-1.5 py-0.5 rounded-md text-center whitespace-nowrap">
           {formatName(name)}
         </span>
       </div>
@@ -60,18 +96,42 @@ function PitchPlayerSlot({ position, name, photo_url, top, left, isRival = false
   );
 }
 
-// (Tu componente BenchPlayer no cambia)
-function BenchPlayer({ name, position, photo_url, isRival = false }: { name: string; position: string; photo_url: string | null | undefined; isRival?: boolean; }) {
+// --- BenchPlayer (MODIFICADO) ---
+function BenchPlayer({ name, position, photo_url, isRival = false, teamLogoUrl }: { name: string; position: string; photo_url: string | null | undefined; isRival?: boolean; teamLogoUrl: string | null | undefined; }) {
   return (
-    <div className={`flex flex-col items-center w-[60px] ${isRival ? 'text-destructive' : 'text-primary'}`}>
-      {photo_url ? (
-        <img src={photo_url} alt={name} className={`w-8 h-8 rounded-full object-cover border-2 ${isRival ? 'border-destructive/50' : 'border-primary/50'}`} />
-      ) : (
-        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border ${isRival ? 'bg-destructive/20 border-destructive/50' : 'bg-primary/20 border-primary/50'}`}>
-          {position.slice(0, 3).toUpperCase()}
+    // --- ⬇️ CAMBIO: Se quitó 'relative' y 'w-[70px]' de este div ⬇️ ---
+    <div className={`flex flex-col items-center text-center ${isRival ? 'text-destructive' : 'text-primary'}`}>
+      
+      {/* --- ⬇️ NUEVO: 'div' con 'relative' que solo envuelve el avatar y los iconos ⬇️ --- */}
+      <div className="relative">
+        {teamLogoUrl && (
+              <img
+                  src={teamLogoUrl}
+                  alt="Team Logo"
+                  className="absolute -top-1 -left-1 w-4 h-4 rounded-full object-cover border border-gray-300 bg-white shadow-sm z-10"
+              />
+          )}
+        <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-zinc-700 text-white text-xs font-semibold flex items-center justify-center z-10 border border-gray-300 shadow-sm">
+            -
         </div>
-      )}
-      <span className="text-xs font-semibold mt-1 truncate w-full text-center">
+
+        {/* El avatar/fallback va DENTRO del nuevo div relative */}
+        {photo_url ? (
+          <img
+            src={photo_url}
+            alt={name}
+            className={`w-10 h-10 rounded-full object-cover border-2 ${isRival ? 'border-destructive/50' : 'border-primary/50'}`}
+          />
+        ) : (
+          <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold border ${isRival ? 'bg-destructive/20 border-destructive/50' : 'bg-primary/20 border-primary/50'}`}>
+            {position.slice(0, 3).toUpperCase()}
+          </div>
+        )}
+      </div>
+      {/* --- ⬆️ Fin del nuevo 'div' relative ⬆️ --- */}
+      
+      {/* El nombre ahora es hermano del 'div' de arriba */}
+      <span className="text-xs font-semibold mt-1 whitespace-nowrap px-1">
         {formatName(name)}
       </span>
     </div>
@@ -79,19 +139,18 @@ function BenchPlayer({ name, position, photo_url, isRival = false }: { name: str
 }
 
 
-// --- 5. INTERFAZ DE PROPS (ACTUALIZADA) ---
+// --- INTERFAZ DE PROPS (sin cambios) ---
 interface MatchOfTheDayProps {
   profile: Profile | null;
   lineup: DailyLineup | null;
   squad: Player[];
-  // --- PROPS DEL RIVAL ---
   opponentProfile: Profile | null;
   opponentLineup: DailyLineup | null;
   opponentSquad: Player[];
-  matchup: any | null; // 'any' está bien aquí, o puedes crear un tipo Matchup
+  matchup: any | null;
 }
 
-// --- 6. COMPONENTE PRINCIPAL (ACTUALIZADO) ---
+// --- COMPONENTE PRINCIPAL (sin cambios) ---
 export function MatchOfTheDay({
   profile,
   lineup,
@@ -102,11 +161,10 @@ export function MatchOfTheDay({
   matchup,
 }: MatchOfTheDayProps) {
   
-  // --- LÓGICA DINÁMICA (Mi equipo) ---
+  // (Lógica de mi equipo - sin cambios)
   const hasLineup = lineup && lineup.final_selection_ids && lineup.final_selection_ids.length === 8;
   let myTeamPlayers: Player[] = [];
   let myBenchPlayers: Player[] = [];
-
   if (hasLineup && squad && squad.length > 0) {
     const selectedIds = new Set(lineup.final_selection_ids);
     myTeamPlayers = squad.filter((player) => selectedIds.has(player.id));
@@ -116,7 +174,6 @@ export function MatchOfTheDay({
   const defPlayers = myTeamPlayers.filter((p) => p.position === 'Defensor');
   const medPlayers = myTeamPlayers.filter((p) => p.position === 'Mediocampista');
   const fwdPlayers = myTeamPlayers.filter((p) => p.position === 'Delantero');
-
   const myTeam = [
     { player: gkPlayer, top: '45%', left: '10%' },
     { player: defPlayers[0], top: '28%', left: '22%' },
@@ -128,23 +185,19 @@ export function MatchOfTheDay({
     { player: fwdPlayers[1], top: '52%', left: '46%' },
   ];
   
-  // --- LÓGICA DINÁMICA (Rival) ---
+  // (Lógica del rival - sin cambios)
   const hasRivalLineup = opponentLineup && opponentLineup.final_selection_ids && opponentLineup.final_selection_ids.length === 8;
   let rivalTeamPlayers: Player[] = [];
   let rivalBenchPlayers: Player[] = [];
-
   if (hasRivalLineup && opponentSquad && opponentSquad.length > 0) {
     const rivalSelectedIds = new Set(opponentLineup.final_selection_ids);
     rivalTeamPlayers = opponentSquad.filter((player) => rivalSelectedIds.has(player.id));
     rivalBenchPlayers = opponentSquad.filter((player) => !rivalSelectedIds.has(player.id));
   }
-
   const rivalGkPlayer = rivalTeamPlayers.find((p) => p.position === 'Arquero');
   const rivalDefPlayers = rivalTeamPlayers.filter((p) => p.position === 'Defensor');
   const rivalMedPlayers = rivalTeamPlayers.filter((p) => p.position === 'Mediocampista');
   const rivalFwdPlayers = rivalTeamPlayers.filter((p) => p.position === 'Delantero');
-
-  // Usamos las coordenadas del rival que tenías
   const rivalTeam = [
     { player: rivalGkPlayer, top: '45%', left: '90%' },
     { player: rivalDefPlayers[0], top: '28%', left: '78%' },
@@ -156,8 +209,7 @@ export function MatchOfTheDay({
     { player: rivalFwdPlayers[1], top: '52%', left: '54%' },
   ];
 
-  // --- ESTADO DE "SIN PARTIDO" ---
-  // Si no hay matchup, significa que no juegas esta fecha (o no se generó)
+  // (Estado "Sin Partido" - sin cambios)
   if (!matchup) {
     return (
       <Card className="xl:col-span-5">
@@ -169,7 +221,7 @@ export function MatchOfTheDay({
     );
   }
 
-  // --- RENDERIZADO DEL PARTIDO ---
+  // (Renderizado - sin cambios)
   return (
     <div className="grid grid-cols-1 xl:grid-cols-5 gap-4 mb-16">
       
@@ -189,11 +241,9 @@ export function MatchOfTheDay({
         <Card className="h-full min-h-[750px] overflow-hidden relative w-full">
           <CardHeader>
             <CardTitle className="font-headline text-center">
-              {/* Título dinámico */}
               Duelo 1v1 - Fecha {matchup.match_day_number}
             </CardTitle>
             <CardDescription className="text-center">
-              {/* Descripción dinámica */}
               {profile?.username || '...'} vs. {opponentProfile?.username || 'Rival...'}
             </CardDescription>
           </CardHeader>
@@ -215,14 +265,13 @@ export function MatchOfTheDay({
                       photo_url={slot.player.photo_url}
                       top={slot.top}
                       left={slot.left}
+                      teamLogoUrl={slot.player.teams?.logo_url}
                     />
                   ) : (
-                    // Slot vacío si falta un jugador
-                    <PitchPlayerSlot key={`empty-mine-${index}`} position="???" name="---" photo_url={null} top={slot.top} left={slot.left} />
+                    <PitchPlayerSlot key={`empty-mine-${index}`} position="???" name="---" photo_url={null} top={slot.top} left={slot.left} teamLogoUrl={null} />
                   )
                 )
               ) : (
-                // Mensaje si MI alineación no está guardada
                 <div className="absolute top-1/4 left-1/4 w-48 text-center p-4 bg-primary/20 rounded-lg">
                   <p className="font-semibold text-primary-foreground">
                     Guarda tu alineación de 8 jugadores para verla aquí.
@@ -242,14 +291,13 @@ export function MatchOfTheDay({
                       top={slot.top}
                       left={slot.left}
                       isRival
+                      teamLogoUrl={slot.player.teams?.logo_url}
                     />
                   ) : (
-                     // Slot vacío si al rival le falta un jugador
-                     <PitchPlayerSlot key={`empty-rival-${index}`} position="???" name="---" photo_url={null} top={slot.top} left={slot.left} isRival />
+                     <PitchPlayerSlot key={`empty-rival-${index}`} position="???" name="---" photo_url={null} top={slot.top} left={slot.left} isRival teamLogoUrl={null} />
                   )
                 )
               ) : (
-                 // Mensaje si el RIVAL no guardó alineación
                  <div className="absolute top-1/4 right-1/4 w-48 text-center p-4 bg-destructive/20 rounded-lg">
                   <p className="font-semibold text-destructive-foreground">
                     Tu rival ({opponentProfile?.username || '...'}) aún no ha guardado su alineación.
@@ -266,20 +314,33 @@ export function MatchOfTheDay({
           <div className="flex gap-3">
             {myBenchPlayers.length > 0
               ? myBenchPlayers.map((p) => (
-                  <BenchPlayer key={p.id} name={p.name} position={p.position} photo_url={p.photo_url} />
+                  <BenchPlayer
+                    key={p.id}
+                    name={p.name}
+                    position={p.position}
+                    photo_url={p.photo_url}
+                    teamLogoUrl={p.teams?.logo_url}
+                  />
                 ))
-              : Array(4).fill(0).map((_, i) => ( // 4 slots vacíos
-                  <BenchPlayer key={`bench-mine-${i}`} name="---" position="???" photo_url={null} />
+              : Array(4).fill(0).map((_, i) => (
+                  <BenchPlayer key={`bench-mine-${i}`} name="---" position="???" photo_url={null} teamLogoUrl={null} />
                 ))}
           </div>
           {/* Suplentes rival (derecha) */}
           <div className="flex gap-3">
              {rivalBenchPlayers.length > 0
               ? rivalBenchPlayers.map((p) => (
-                  <BenchPlayer key={p.id} name={p.name} position={p.position} photo_url={p.photo_url} isRival />
+                  <BenchPlayer
+                    key={p.id}
+                    name={p.name}
+                    position={p.position}
+                    photo_url={p.photo_url}
+                    isRival
+                    teamLogoUrl={p.teams?.logo_url}
+                  />
                 ))
-              : Array(4).fill(0).map((_, i) => ( // 4 slots vacíos
-                  <BenchPlayer key={`bench-rival-${i}`} name="---" position="???" photo_url={null} isRival />
+              : Array(4).fill(0).map((_, i) => (
+                  <BenchPlayer key={`bench-rival-${i}`} name="---" position="???" photo_url={null} isRival teamLogoUrl={null} />
                 ))}
           </div>
         </div>

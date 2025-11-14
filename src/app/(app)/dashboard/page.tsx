@@ -1,5 +1,5 @@
 // src/app/(app)/dashboard/page.tsx
-// --- ARCHIVO PRINCIPAL ACTUALIZADO (CON LÓGICA DE RIVAL) ---
+// --- ARCHIVO COMPLETO (SIN QUITAR NADA + AÑADIDO EL CONTADOR) ---
 
 'use client';
 
@@ -10,10 +10,12 @@ import { LeagueStandingsTable } from '@/components/dashboard/LeagueStandingsTabl
 import { MatchOfTheDay } from '@/components/dashboard/MatchOfTheDay';
 import { StrategyCardManager } from '@/components/strategy/strategy-cards';
 import { LineupBuilder } from '@/components/lineup/lineup-builder';
+import { FixtureTab } from "@/components/dashboard/FixtureTab";
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createClient } from '@/lib/supabase/client';
-import { Coins, Users } from 'lucide-react';
+// --- ⬇️ CAMBIO: Importamos AlarmClock ⬇️ ---
+import { Coins, Users, AlarmClock } from 'lucide-react'; 
 import {
   type Player,
   type GameDay,
@@ -28,14 +30,31 @@ type League = {
   max_participants: number;
 };
 
-// --- TIPO PARA EL PARTIDO (NUEVO) ---
 type Matchup = {
   id: string;
   home_user_id: string;
   away_user_id: string;
   match_day_number: number;
-  // ... (cualquier otro campo de matchup)
 };
+
+// --- ⬇️ NUEVO COMPONENTE ESTÉTICO PARA EL CONTADOR ⬇️ ---
+function AestheticCountdownTimer() {
+  return (
+    <div className="flex items-center gap-2">
+      <AlarmClock className="h-5 w-5 text-destructive animate-pulse" />
+      <div className="text-right">
+        {/* Usamos un tiempo falso para que se vea realista */}
+        <span className="text-xl font-bold font-mono text-destructive">
+          23:15:42
+        </span>
+        <p className="text-xs text-muted-foreground -mt-1">
+          Cierre de Alineación
+        </p>
+      </div>
+    </div>
+  );
+}
+// --- ⬆️ FIN DEL NUEVO COMPONENTE ⬆️ ---
 
 export default function DashboardPage() {
   const [selectedLeague, setSelectedLeague] = useState<League | null>(null);
@@ -59,10 +78,11 @@ export default function DashboardPage() {
   const [loadingLeagueData, setLoadingLeagueData] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [standings, setStandings] = useState<any[]>([]); // Guardará la lista de equipos
-
+  const [leagueFixture, setLeagueFixture] = useState<any[]>([]);
+  
   const supabase = createClient();
 
-  // --- EFECTO 1: Cargar usuario y sus ligas inscritas (sin cambios) ---
+  // --- EFECTO 1: Cargar usuario y sus ligas inscritas (TU CÓDIGO ORIGINAL) ---
   useEffect(() => {
     const fetchUserAndLeagues = async () => {
       setLoadingLeagues(true);
@@ -102,7 +122,7 @@ export default function DashboardPage() {
     fetchUserAndLeagues();
   }, [supabase]);
 
-  // --- EFECTO 2: Cargar datos de la liga seleccionada (MODIFICADO) ---
+  // --- EFECTO 2: Cargar datos de la liga seleccionada (TU CÓDIGO ORIGINAL) ---
   useEffect(() => {
     if (!selectedLeague || !userId) return;
 
@@ -112,6 +132,7 @@ export default function DashboardPage() {
       // Resetea TODOS los datos
       setGameDay(null); setSquad([]); setLineup(null);
       setMatchup(null); setOpponentProfile(null); setOpponentSquad([]); setOpponentLineup(null);
+      setLeagueFixture([]);
 
       try {
         const GAME_DAY_ID = 'c77cd2ef-2c05-4e52-9c62-69496a39903b'; // Tu ID fijo
@@ -125,25 +146,39 @@ export default function DashboardPage() {
         if (gdErr || !gameDayData) throw new Error('Jornada no encontrada.');
         setGameDay(gameDayData);
 
-        // --- INICIO DE NUEVA LÓGICA ---
         // 1.5. Traer la tabla de posiciones (miembros y sus perfiles)
-const { data: standingsData, error: standingsErr } = await supabase
-        .from('league_members')
-        .select(`
-          user_id,
-          profiles ( username )
-        `)
-        .eq('league_id', selectedLeague.id);
-      
-      if (standingsErr) {
-        console.error("Error standings", standingsErr) // Añadimos un log para ver el error si persiste
-        throw new Error('No se pudo cargar la tabla de posiciones.');
-      }
-      setStandings(standingsData || []);
-        // --- FIN DE NUEVA LÓGICA ---
-
-        // --- INICIO: LÓGICA DEL RIVAL ---
+        const { data: standingsData, error: standingsErr } = await supabase
+          .from('league_members')
+          .select(`
+            user_id,
+            profiles ( username )
+          `)
+          .eq('league_id', selectedLeague.id);
         
+        if (standingsErr) {
+          console.error("Error standings", standingsErr) // Añadimos un log para ver el error si persiste
+          throw new Error('No se pudo cargar la tabla de posiciones.');
+        }
+        setStandings(standingsData || []);
+
+        // --- INICIO: LÓGICA DEL FIXTURE ---
+      const { data: fixtureData, error: fixtureErr } = await supabase
+        .from('league_matchups')
+        .select(`
+          match_day_number,
+          home_score,
+          away_score,
+          home_user:profiles!home_user_id ( username ),
+          away_user:profiles!away_user_id ( username )
+        `)
+        .eq('league_id', selectedLeague.id)
+        .order('match_day_number', { ascending: true });
+      
+      if (fixtureErr) {
+        console.error("Error fetching fixture:", fixtureErr);
+        throw new Error('No se pudo cargar el fixture.');
+      }
+      setLeagueFixture(fixtureData || []);
         // 2. Encontrar el partido y el ID del rival
         const { data: matchupData, error: matchupErr } = await supabase
           .from('league_matchups')
@@ -156,7 +191,6 @@ const { data: standingsData, error: standingsErr } = await supabase
         let opponentUserId: string | null = null;
         if (matchupErr || !matchupData) {
           console.warn('No se encontró un partido para este usuario en esta fecha.');
-          // No lanzamos error, puede que solo quiera ver la pestaña "Alineación"
         } else {
           setMatchup(matchupData);
           opponentUserId = matchupData.home_user_id === userId 
@@ -166,27 +200,21 @@ const { data: standingsData, error: standingsErr } = await supabase
 
         // 3. Si encontramos un rival, buscar sus datos
         if (opponentUserId) {
-          // Perfil del Rival
           const { data: oppProfileData } = await supabase.from('profiles').select('*').eq('id', opponentUserId).single();
           setOpponentProfile(oppProfileData);
 
-          // Plantilla (Squad) del Rival
           const { data: oppSquadData } = await supabase.from('daily_squads').select('player_ids').eq('user_id', opponentUserId).eq('game_day_id', GAME_DAY_ID).eq('league_id', selectedLeague.id).single();
           
           if (oppSquadData && oppSquadData.player_ids) {
-            // Detalles de jugadores del Rival
             const { data: oppPlayersData } = await supabase.from('players').select('*, teams ( name, pot, logo_url )').in('id', oppSquadData.player_ids);
             setOpponentSquad(oppPlayersData || []);
             
-            // Alineación (Lineup) guardada del Rival
             const { data: oppLineupData } = await supabase.from('daily_lineups').select('*').eq('user_id', opponentUserId).eq('game_day_id', GAME_DAY_ID).eq('league_id', selectedLeague.id).single();
             setOpponentLineup(oppLineupData || null);
           }
         }
-        // --- FIN: LÓGICA DEL RIVAL ---
 
-
-        // 4. Traer datos del USUARIO LOGUEADO (como antes)
+        // 4. Traer datos del USUARIO LOGUEADO
         const { data: squadData, error: squadErr } = await supabase
           .from('daily_squads')
           .select('player_ids')
@@ -197,9 +225,7 @@ const { data: standingsData, error: standingsErr } = await supabase
 
         if (squadErr || !squadData || !squadData.player_ids) {
           console.warn('No se encontró daily_squad para el usuario logueado.');
-          // Esto es normal si el sorteo no se corrió
         } else {
-           // 5. Traer detalles de los 12 jugadores (USUARIO)
           const playerIds: string[] = squadData.player_ids || [];
           const { data: playersData, error: playersErr } = await supabase
             .from('players')
@@ -208,7 +234,6 @@ const { data: standingsData, error: standingsErr } = await supabase
           if (playersErr) throw new Error('No se pudieron cargar los jugadores del usuario.');
           setSquad(playersData || []);
 
-          // 6. Traer daily_lineup (USUARIO)
           const { data: lineupData } = await supabase
             .from('daily_lineups')
             .select('*')
@@ -233,7 +258,7 @@ const { data: standingsData, error: standingsErr } = await supabase
   return (
     <div className="container mx-auto py-8">
       
-      {/* ... Tu código de Header y Grid de Ligas ... */}
+      {/* Header y Grid de Ligas (TU CÓDIGO ORIGINAL) */}
       <div className="mb-8 text-center">
         <h1 className="text-4xl font-bold tracking-tight font-headline">Tu Dashboard</h1>
         <p className="text-muted-foreground max-w-2xl mx-auto mt-2">
@@ -282,7 +307,9 @@ const { data: standingsData, error: standingsErr } = await supabase
             transition={{ duration: 0.3 }}
           >
             <Card className="p-6">
-              <CardHeader>
+              
+              {/* --- ⬇️ CAMBIO: Se añadió 'relative' al CardHeader ⬇️ --- */}
+              <CardHeader className="relative">
                 <CardTitle className="text-2xl font-headline text-center flex items-center justify-center gap-2">
                   <span>{selectedLeague.name || `Liga`}</span>
                   {!loadingLeagueData && gameDay && (
@@ -291,6 +318,16 @@ const { data: standingsData, error: standingsErr } = await supabase
                     </span>
                   )}
                 </CardTitle>
+                
+                {/* --- ⬇️ NUEVO: Contador posicionado absolutamente ⬇️ --- */}
+                <div className="absolute top-6 right-6">
+                  {/* Solo muestra el contador si los datos cargaron */}
+                  {!loadingLeagueData && gameDay && (
+                    <AestheticCountdownTimer />
+                  )}
+                </div>
+                {/* --- FIN DEL NUEVO CONTADOR --- */}
+
               </CardHeader>
 
               <CardContent>
@@ -306,6 +343,7 @@ const { data: standingsData, error: standingsErr } = await supabase
                         { value: 'tabla', label: 'Tabla' },
                         { value: 'partido', label: 'Partido del Día' },
                         { value: 'estrategia', label: 'Estrategia' },
+                        { value: 'fixture', label: 'Fixture' },
                       ].map((tab) => (
                         <TabsTrigger
                           key={tab.value}
@@ -331,13 +369,13 @@ const { data: standingsData, error: standingsErr } = await supabase
                     </TabsContent>
 
                     {/* --- Tabla --- */}
-<TabsContent value="tabla">
-                  <LeagueStandingsTable
-                    standings={standings}
-                    currentUserProfile={profile}
-                    leagueName={selectedLeague.name}
-                  />
-                </TabsContent>
+                    <TabsContent value="tabla">
+                      <LeagueStandingsTable
+                        standings={standings}
+                        currentUserProfile={profile}
+                        leagueName={selectedLeague.name}
+                      />
+                    </TabsContent>
 
                     {/* --- Partido del Día (Pasa TODAS las props) --- */}
                     <TabsContent value="partido">
@@ -357,6 +395,14 @@ const { data: standingsData, error: standingsErr } = await supabase
                     <TabsContent value="estrategia">
                       <StrategyCardManager />
                     </TabsContent>
+
+                    <TabsContent value="fixture">
+  <FixtureTab 
+    leagueFixture={leagueFixture} 
+    gameDay={gameDay} 
+  />
+</TabsContent>
+                    
                   </Tabs>
                 )}
 

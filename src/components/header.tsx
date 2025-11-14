@@ -1,3 +1,6 @@
+// src/components/header.tsx
+// --- ARCHIVO ACTUALIZADO CON TIENDA Y RENDIMIENTO ---
+
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/icons';
@@ -49,6 +52,25 @@ export async function Header() {
                 className="font-medium text-base text-muted-foreground hover:text-primary hover:bg-primary/10 transition"
               >
                 <Link href="/dashboard">Dashboard</Link>
+              </Button>
+
+              {/* --- NUEVO LINK: RENDIMIENTO --- */}
+              <Button
+                asChild
+                variant="ghost"
+                className="font-medium text-base text-muted-foreground hover:text-primary hover:bg-primary/10 transition"
+              >
+                {/* Puedes cambiar el href a /estadisticas si prefieres ese nombre */}
+                <Link href="/rendimiento">Rendimiento</Link>
+              </Button>
+
+              {/* --- NUEVO LINK: TIENDA --- */}
+              <Button
+                asChild
+                variant="ghost"
+                className="font-medium text-base text-muted-foreground hover:text-primary hover:bg-primary/10 transition"
+              >
+                <Link href="/tienda">Tienda</Link>
               </Button>
             </>
           )}
