@@ -1,3 +1,6 @@
+// src/app/(app)/dashboard/types.ts
+// --- ARCHIVO COMPLETO Y ACTUALIZADO ---
+
 // --- Tabla 'teams' ---
 export type Team = {
   id: string;
@@ -5,6 +8,12 @@ export type Team = {
   pot: number;
   photo_url: string | null; // Logo del equipo (opcional)
   logo_url: string | null;
+};
+
+// --- ⬇️ AÑADE ESTE NUEVO TIPO ⬇️ ---
+// --- Tabla 'player_scores' ---
+export type PlayerScore = {
+  score: number;
 };
 
 // --- Tabla 'players' ---
@@ -17,6 +26,7 @@ export type Player = {
   team_id: string;
   photo_url: string | null; // ✅ Agregada: imagen del jugador
   teams: Team; // Relación: equipo del jugador
+  player_scores: PlayerScore[]; // <--- ¡LÍNEA AÑADIDA!
 };
 
 // --- Tabla 'game_days' ---
@@ -24,7 +34,7 @@ export type GameDay = {
   id: string;
   match_date: string;
   teams_playings: string[];
-  match_day_number: number; // <-- ¡AÑADE ESTA LÍNEA!
+  match_day_number: number;
 };
 
 // --- Tabla 'daily_squads' ---
@@ -46,7 +56,6 @@ export type DailyLineup = {
   game_day_id: string;
   final_selection_ids: string[];
   updated_at?: string;
-  
 };
 
 export type Profile = {

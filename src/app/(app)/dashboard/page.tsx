@@ -1,5 +1,5 @@
 // src/app/(app)/dashboard/page.tsx
-// --- ARCHIVO COMPLETO (SIN QUITAR NADA + AÑADIDO EL CONTADOR) ---
+// --- ARCHIVO COMPLETO Y CORREGIDO (CON CONSULTAS DE SCORE) ---
 
 'use client';
 
@@ -14,7 +14,6 @@ import { FixtureTab } from "@/components/dashboard/FixtureTab";
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createClient } from '@/lib/supabase/client';
-// --- ⬇️ CAMBIO: Importamos AlarmClock ⬇️ ---
 import { Coins, Users, AlarmClock } from 'lucide-react'; 
 import {
   type Player,
@@ -37,13 +36,12 @@ type Matchup = {
   match_day_number: number;
 };
 
-// --- ⬇️ NUEVO COMPONENTE ESTÉTICO PARA EL CONTADOR ⬇️ ---
+// --- (Tu componente AestheticCountdownTimer no cambia) ---
 function AestheticCountdownTimer() {
   return (
     <div className="flex items-center gap-2">
       <AlarmClock className="h-5 w-5 text-destructive animate-pulse" />
       <div className="text-right">
-        {/* Usamos un tiempo falso para que se vea realista */}
         <span className="text-xl font-bold font-mono text-destructive">
           23:15:42
         </span>
@@ -54,7 +52,6 @@ function AestheticCountdownTimer() {
     </div>
   );
 }
-// --- ⬆️ FIN DEL NUEVO COMPONENTE ⬆️ ---
 
 export default function DashboardPage() {
   const [selectedLeague, setSelectedLeague] = useState<League | null>(null);
@@ -77,8 +74,11 @@ export default function DashboardPage() {
   const [loadingLeagues, setLoadingLeagues] = useState(true);
   const [loadingLeagueData, setLoadingLeagueData] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [standings, setStandings] = useState<any[]>([]); // Guardará la lista de equipos
+  const [standings, setStandings] = useState<any[]>([]); 
   const [leagueFixture, setLeagueFixture] = useState<any[]>([]);
+
+  const [myStrategyCard, setMyStrategyCard] = useState<any>(null); 
+  const [opponentStrategyCard, setOpponentStrategyCard] = useState<any>(null);
   
   const supabase = createClient();
 
@@ -122,7 +122,7 @@ export default function DashboardPage() {
     fetchUserAndLeagues();
   }, [supabase]);
 
-  // --- EFECTO 2: Cargar datos de la liga seleccionada (TU CÓDIGO ORIGINAL) ---
+  // --- EFECTO 2: Cargar datos de la liga seleccionada (ACTUALIZADO) ---
   useEffect(() => {
     if (!selectedLeague || !userId) return;
 
@@ -156,7 +156,7 @@ export default function DashboardPage() {
           .eq('league_id', selectedLeague.id);
         
         if (standingsErr) {
-          console.error("Error standings", standingsErr) // Añadimos un log para ver el error si persiste
+          console.error("Error standings", standingsErr) 
           throw new Error('No se pudo cargar la tabla de posiciones.');
         }
         setStandings(standingsData || []);
@@ -182,7 +182,7 @@ export default function DashboardPage() {
         // 2. Encontrar el partido y el ID del rival
         const { data: matchupData, error: matchupErr } = await supabase
           .from('league_matchups')
-          .select('*') // Get everything
+          .select('*') 
           .eq('league_id', selectedLeague.id)
           .eq('game_day_id', GAME_DAY_ID)
           .or(`home_user_id.eq.${userId},away_user_id.eq.${userId}`)
@@ -206,8 +206,20 @@ export default function DashboardPage() {
           const { data: oppSquadData } = await supabase.from('daily_squads').select('player_ids').eq('user_id', opponentUserId).eq('game_day_id', GAME_DAY_ID).eq('league_id', selectedLeague.id).single();
           
           if (oppSquadData && oppSquadData.player_ids) {
-            const { data: oppPlayersData } = await supabase.from('players').select('*, teams ( name, pot, logo_url )').in('id', oppSquadData.player_ids);
+            
+            // --- ⬇️ CAMBIO AQUÍ: Añadida la consulta de player_scores ⬇️ ---
+            const { data: oppPlayersData, error: oppPlayersErr } = await supabase
+              .from('players')
+              .select('*, teams ( name, pot, logo_url ), player_scores ( score )') // 1. Pedir scores
+              .eq('player_scores.game_day_id', GAME_DAY_ID) // 2. Filtrar scores
+              .in('id', oppSquadData.player_ids);
+            
+            if (oppPlayersErr) {
+              console.error("Error fetching rival players/scores:", oppPlayersErr);
+              throw new Error('No se pudieron cargar los jugadores del rival.');
+            }
             setOpponentSquad(oppPlayersData || []);
+            // --- ⬆️ FIN DEL CAMBIO ⬆️ ---
             
             const { data: oppLineupData } = await supabase.from('daily_lineups').select('*').eq('user_id', opponentUserId).eq('game_day_id', GAME_DAY_ID).eq('league_id', selectedLeague.id).single();
             setOpponentLineup(oppLineupData || null);
@@ -227,12 +239,20 @@ export default function DashboardPage() {
           console.warn('No se encontró daily_squad para el usuario logueado.');
         } else {
           const playerIds: string[] = squadData.player_ids || [];
+          
+          // --- ⬇️ CAMBIO AQUÍ: Añadida la consulta de player_scores ⬇️ ---
           const { data: playersData, error: playersErr } = await supabase
             .from('players')
-            .select('*, teams ( name, pot, logo_url )')
+            .select('*, teams ( name, pot, logo_url ), player_scores ( score )') // 1. Pedir scores
+            .eq('player_scores.game_day_id', GAME_DAY_ID) // 2. Filtrar scores
             .in('id', playerIds);
-          if (playersErr) throw new Error('No se pudieron cargar los jugadores del usuario.');
+            
+          if (playersErr) {
+            console.error("Error fetching user players/scores:", playersErr);
+            throw new Error('No se pudieron cargar los jugadores del usuario.');
+          }
           setSquad(playersData || []);
+          // --- ⬆️ FIN DEL CAMBIO ⬆️ ---
 
           const { data: lineupData } = await supabase
             .from('daily_lineups')
@@ -254,7 +274,7 @@ export default function DashboardPage() {
     fetchLeagueData();
   }, [selectedLeague, userId, supabase]);
 
-  // --- RENDERIZADO ---
+  // --- RENDERIZADO (sin cambios) ---
   return (
     <div className="container mx-auto py-8">
       
@@ -308,7 +328,6 @@ export default function DashboardPage() {
           >
             <Card className="p-6">
               
-              {/* --- ⬇️ CAMBIO: Se añadió 'relative' al CardHeader ⬇️ --- */}
               <CardHeader className="relative">
                 <CardTitle className="text-2xl font-headline text-center flex items-center justify-center gap-2">
                   <span>{selectedLeague.name || `Liga`}</span>
@@ -319,15 +338,11 @@ export default function DashboardPage() {
                   )}
                 </CardTitle>
                 
-                {/* --- ⬇️ NUEVO: Contador posicionado absolutamente ⬇️ --- */}
                 <div className="absolute top-6 right-6">
-                  {/* Solo muestra el contador si los datos cargaron */}
                   {!loadingLeagueData && gameDay && (
                     <AestheticCountdownTimer />
                   )}
                 </div>
-                {/* --- FIN DEL NUEVO CONTADOR --- */}
-
               </CardHeader>
 
               <CardContent>
@@ -337,13 +352,14 @@ export default function DashboardPage() {
                   <p className="text-center text-destructive py-6">{errorMsg}</p>
                 ) : (
                   <Tabs defaultValue="alineacion" className="w-full">
+                    
                     <TabsList className="flex justify-center mb-10 bg-muted/40 p-3 rounded-xl gap-3">
                       {[
                         { value: 'alineacion', label: 'Alineación' },
                         { value: 'tabla', label: 'Tabla' },
                         { value: 'partido', label: 'Partido del Día' },
-                        { value: 'estrategia', label: 'Estrategia' },
                         { value: 'fixture', label: 'Fixture' },
+                        { value: 'estrategia', label: 'Estrategia' },
                       ].map((tab) => (
                         <TabsTrigger
                           key={tab.value}
@@ -355,7 +371,6 @@ export default function DashboardPage() {
                       ))}
                     </TabsList>
 
-                    {/* --- Alineación (Pasa props) --- */}
                     <TabsContent value="alineacion">
                       <div className="py-6">
                         <LineupBuilder
@@ -368,7 +383,6 @@ export default function DashboardPage() {
                       </div>
                     </TabsContent>
 
-                    {/* --- Tabla --- */}
                     <TabsContent value="tabla">
                       <LeagueStandingsTable
                         standings={standings}
@@ -376,33 +390,37 @@ export default function DashboardPage() {
                         leagueName={selectedLeague.name}
                       />
                     </TabsContent>
-
-                    {/* --- Partido del Día (Pasa TODAS las props) --- */}
-                    <TabsContent value="partido">
-                      <MatchOfTheDay
-                        profile={profile}
-                        lineup={lineup}
-                        squad={squad}
-                        // --- PROPS DEL RIVAL ---
-                        opponentProfile={opponentProfile}
-                        opponentLineup={opponentLineup}
-                        opponentSquad={opponentSquad}
-                        matchup={matchup}
+                    
+                    <TabsContent value="fixture">
+                      <FixtureTab 
+                        leagueFixture={leagueFixture} 
+                        gameDay={gameDay} 
                       />
                     </TabsContent>
-
-                    {/* --- Estrategia --- */}
-                    <TabsContent value="estrategia">
-                      <StrategyCardManager />
-                    </TabsContent>
-
-                    <TabsContent value="fixture">
-  <FixtureTab 
-    leagueFixture={leagueFixture} 
-    gameDay={gameDay} 
+{/* --- Partido del Día (Pasa TODAS las props) --- */}
+<TabsContent value="partido">
+  <MatchOfTheDay
+    profile={profile}
+    lineup={lineup}
+    squad={squad}
+    opponentProfile={opponentProfile}
+    opponentLineup={opponentLineup}
+    opponentSquad={opponentSquad}
+    matchup={matchup}
+    leagueId={selectedLeague?.id || null}
+    gameDay={gameDay}
   />
 </TabsContent>
-                    
+
+{/* --- Estrategia --- */}
+                <TabsContent value="estrategia">
+                  <StrategyCardManager
+                    profile={profile}
+                    matchup={matchup}
+                    gameDay={gameDay}
+                    leagueId={selectedLeague?.id || null}
+                  />
+                </TabsContent>
                   </Tabs>
                 )}
 
