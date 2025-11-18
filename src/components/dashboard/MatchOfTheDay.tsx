@@ -1,5 +1,5 @@
 // src/components/dashboard/MatchOfTheDay.tsx
-// --- ARCHIVO FINAL CORREGIDO (CON CANCHA, PUNTAJES SEGUROS Y ESTÉTICA) ---
+// --- ARCHIVO FINAL: ESTRUCTURA ORIGINAL + LÓGICA WIN/LOSE ---
 
 'use client';
 
@@ -10,15 +10,17 @@ import {
   CardContent,
   CardDescription,
 } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { FootballPitch } from './FootballPitch';
-import { StrategyCardManager } from '@/components/strategy/strategy-cards'; // Importamos la carta
+import { StrategyCardManager } from '@/components/strategy/strategy-cards';
 import {
   type Player,
   type DailyLineup,
   type Profile,
-  type GameDay, // <-- NECESITAMOS ESTE TIPO
+  type GameDay,
 } from '@/app/(app)/dashboard/types';
 
+// --- UTILIDADES ---
 const formatName = (name: string) => {
   if (!name) return '---';
   const parts = name.trim().split(' ');
@@ -26,6 +28,7 @@ const formatName = (name: string) => {
   return name;
 };
 
+// --- COMPONENTES AUXILIARES ---
 function ProfilePlaceholder({ title }: { title: string }) {
   return (
     <Card className="h-full">
@@ -40,28 +43,12 @@ function ProfilePlaceholder({ title }: { title: string }) {
   );
 }
 
-// --- PitchPlayerSlot (MODIFICADO) ---
+// --- PitchPlayerSlot ---
 function PitchPlayerSlot({ 
-  position, 
-  name, 
-  photo_url, 
-  top, 
-  left, 
-  isRival = false, 
-  teamLogoUrl,
-  score 
+  position, name, photo_url, top, left, isRival = false, teamLogoUrl, score 
 }: { 
-  position: string; 
-  name: string; 
-  photo_url: string | null | undefined; 
-  top: string; 
-  left: string; 
-  isRival?: boolean; 
-  teamLogoUrl: string | null | undefined;
-  score: number | null | undefined;
+  position: string; name: string; photo_url: string | null | undefined; top: string; left: string; isRival?: boolean; teamLogoUrl: string | null | undefined; score: number | null | undefined;
 }) {
-
-  // --- LÓGICA DE COLOR AÑADIDA ---
   const scoreValue = (score !== null && score !== undefined) ? score : null;
   const scoreColor = 
     scoreValue === null ? 'bg-zinc-600 border-zinc-400' :
@@ -70,29 +57,15 @@ function PitchPlayerSlot({
     'bg-red-600 border-red-400';
 
   return (
-    <div
-      className="absolute"
-      style={{
-        top: `calc(${top} - 25px)`,
-        left: `${left}`,
-        transform: 'translateX(-50%)' 
-      }}
-    >
+    <div className="absolute" style={{ top: `calc(${top} - 25px)`, left: `${left}`, transform: 'translateX(-50%)' }}>
       <div className="flex flex-col items-center">
         <div className="relative">
           {teamLogoUrl && (
-              <img
-                  src={teamLogoUrl}
-                  alt="Team Logo"
-                  className="absolute -top-1 -left-1 w-4 h-4 rounded-full object-cover border border-gray-300 bg-white shadow-sm z-10"
-              />
+              <img src={teamLogoUrl} alt="Team Logo" className="absolute -top-1 -left-1 w-4 h-4 rounded-full object-cover border border-gray-300 bg-white shadow-sm z-10" />
           )}
-          
-          {/* --- CAMBIO DE TAMAÑO, POSICIÓN Y COLOR --- */}
           <div className={`absolute -top-2 -right-2 min-w-[1.6rem] h-5 px-1 rounded-full ${scoreColor} text-white text-[11px] font-bold flex items-center justify-center z-10 border shadow-md`}>
             {scoreValue !== null ? scoreValue.toFixed(1) : '-'}
           </div>
-
           {photo_url ? (
             <img src={photo_url} alt={name} className={`w-10 h-10 rounded-full object-cover border-2 ${isRival ? 'border-destructive/50' : 'border-primary/50'}`} />
           ) : (
@@ -109,24 +82,12 @@ function PitchPlayerSlot({
   );
 }
 
-// --- BenchPlayer (MODIFICADO) ---
+// --- BenchPlayer ---
 function BenchPlayer({ 
-  name, 
-  position, 
-  photo_url, 
-  isRival = false, 
-  teamLogoUrl,
-  score 
+  name, position, photo_url, isRival = false, teamLogoUrl, score 
 }: { 
-  name: string; 
-  position: string; 
-  photo_url: string | null | undefined; 
-  isRival?: boolean; 
-  teamLogoUrl: string | null | undefined;
-  score: number | null | undefined;
+  name: string; position: string; photo_url: string | null | undefined; isRival?: boolean; teamLogoUrl: string | null | undefined; score: number | null | undefined;
 }) {
-
-  // --- LÓGICA DE COLOR AÑADIDA ---
   const scoreValue = (score !== null && score !== undefined) ? score : null;
   const scoreColor = 
     scoreValue === null ? 'bg-zinc-600 border-zinc-400' :
@@ -138,18 +99,11 @@ function BenchPlayer({
     <div className={`flex flex-col items-center text-center ${isRival ? 'text-destructive' : 'text-primary'}`}>
       <div className="relative">
         {teamLogoUrl && (
-              <img
-                  src={teamLogoUrl}
-                  alt="Team Logo"
-                  className="absolute -top-1 -left-1 w-4 h-4 rounded-full object-cover border border-gray-300 bg-white shadow-sm z-10"
-              />
+              <img src={teamLogoUrl} alt="Team Logo" className="absolute -top-1 -left-1 w-4 h-4 rounded-full object-cover border border-gray-300 bg-white shadow-sm z-10" />
           )}
-        
-        {/* --- CAMBIO DE TAMAÑO, POSICIÓN Y COLOR --- */}
         <div className={`absolute -top-2 -right-2 min-w-[1.6rem] h-5 px-1 rounded-full ${scoreColor} text-white text-[11px] font-bold flex items-center justify-center z-10 border shadow-md`}>
             {scoreValue !== null ? scoreValue.toFixed(1) : '-'}
         </div>
-
         {photo_url ? (
           <img src={photo_url} alt={name} className={`w-10 h-10 rounded-full object-cover border-2 ${isRival ? 'border-destructive/50' : 'border-primary/50'}`} />
         ) : (
@@ -165,8 +119,7 @@ function BenchPlayer({
   );
 }
 
-
-// --- INTERFAZ DE PROPS (ACTUALIZADA) ---
+// --- INTERFAZ DE PROPS ---
 interface MatchOfTheDayProps {
   profile: Profile | null;
   lineup: DailyLineup | null;
@@ -176,10 +129,10 @@ interface MatchOfTheDayProps {
   opponentSquad: Player[];
   matchup: any | null;
   leagueId: string | null; 
-  gameDay: GameDay | null; // <--- ¡AÑADIDA!
+  gameDay: GameDay | null;
 }
 
-// --- COMPONENTE PRINCIPAL (ACTUALIZADO) ---
+// --- COMPONENTE PRINCIPAL ---
 export function MatchOfTheDay({
   profile,
   lineup,
@@ -189,10 +142,10 @@ export function MatchOfTheDay({
   opponentSquad,
   matchup,
   leagueId,
-  gameDay, // <--- ¡AÑADIDO!
+  gameDay,
 }: MatchOfTheDayProps) {
   
-  // (Lógica de mi equipo - sin cambios)
+  // (Lógica de mi equipo)
   const hasLineup = lineup && lineup.final_selection_ids && lineup.final_selection_ids.length === 8;
   let myTeamPlayers: Player[] = [];
   let myBenchPlayers: Player[] = [];
@@ -216,7 +169,7 @@ export function MatchOfTheDay({
     { player: fwdPlayers[1], top: '52%', left: '46%' },
   ];
   
-  // (Lógica del rival - sin cambios)
+  // (Lógica del rival)
   const hasRivalLineup = opponentLineup && opponentLineup.final_selection_ids && opponentLineup.final_selection_ids.length === 8;
   let rivalTeamPlayers: Player[] = [];
   let rivalBenchPlayers: Player[] = [];
@@ -240,6 +193,30 @@ export function MatchOfTheDay({
     { player: rivalFwdPlayers[1], top: '52%', left: '54%' },
   ];
 
+  // --- CÁLCULO DE PUNTAJES TOTALES ---
+  // Usamos una validación segura por si el array player_scores viene vacío
+  const myTotalScore = myTeamPlayers.reduce((acc, player) => {
+    const score = (player.player_scores && player.player_scores.length > 0) 
+      ? player.player_scores[0].score 
+      : 0;
+    return acc + score;
+  }, 0);
+
+  const rivalTotalScore = rivalTeamPlayers.reduce((acc, player) => {
+    const score = (player.player_scores && player.player_scores.length > 0) 
+      ? player.player_scores[0].score 
+      : 0;
+    return acc + score;
+  }, 0);
+
+  // --- LÓGICA WIN / LOSE (PROVISORIA) ---
+  // Se mostrará el resultado cuando la suma de puntajes sea mayor a 0.
+  // Esto simula que la fecha "ha comenzado/terminado".
+  const showResult = myTotalScore > 0 || rivalTotalScore > 0;
+  
+  const iWin = myTotalScore > rivalTotalScore;
+  const isDraw = myTotalScore === rivalTotalScore;
+
   if (!matchup) {
     return (
       <Card className="xl:col-span-5">
@@ -251,58 +228,104 @@ export function MatchOfTheDay({
     );
   }
 
-  // --- RENDERIZADO (CON LAS 3 COLUMNAS RESTAURADAS) ---
   return (
     <div className="grid grid-cols-1 xl:grid-cols-5 gap-4 mb-16">
       
-{/* IZQUIERDA (MI PERFIL) */}
-<div className="flex flex-col gap-4">
-  <ProfilePlaceholder
-    title={`MI PERFIL (${profile?.username || 'Cargando...'})`}
-  />
-  
-  <Card>
-    <CardHeader>
-      <CardTitle className="font-headline text-lg text-center">
-        MI CARTA
-      </CardTitle>
-    </CardHeader>
-    <CardContent className="p-4"> 
-      <StrategyCardManager
-        profile={profile}
-        matchup={matchup}
-        gameDay={gameDay}
-        leagueId={leagueId}
-        size="small" // <--- ¡AÑADE ESTA LÍNEA!
-      />
-    </CardContent>
-  </Card>
-</div>
+      {/* IZQUIERDA (MI PERFIL) */}
+      <div className="flex flex-col gap-4">
+        <ProfilePlaceholder
+          title={`MI PERFIL (${profile?.username || 'Cargando...'})`}
+        />
+        
+        <Card>
+          <CardHeader>
+            <CardTitle className="font-headline text-lg text-center">
+              MI CARTA
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-4"> 
+            <StrategyCardManager
+              profile={profile}
+              matchup={matchup}
+              gameDay={gameDay}
+              leagueId={leagueId}
+              size="small" 
+            />
+            <Button className="w-full mt-4 font-bold shadow-md transition-all">
+              APLICAR
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* CANCHA CENTRAL */}
       <div className="xl:col-span-3 flex flex-col items-center">
         <Card className="h-full min-h-[750px] overflow-hidden relative w-full">
-          <CardHeader>
-             <CardTitle className="font-headline text-center">
-              Duelo 1v1 - Fecha {matchup.match_day_number}
-            </CardTitle>
-            <CardDescription className="text-center">
-              {profile?.username || '...'} vs. {opponentProfile?.username || 'Rival...'}
-            </CardDescription>
-          </CardHeader>
+          
+          {/* ⬇️ HEADER CON PUNTAJES Y LÓGICA WIN/LOSE ⬇️ */}
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between w-full px-2 sm:px-6">
+              
+              {/* PUNTAJE MÍO (IZQUIERDA) */}
+              <div className="flex flex-col items-center w-24">
+                <span className="text-3xl font-bold text-primary">
+                  {myTotalScore > 0 ? myTotalScore.toFixed(1) : '0.0'}
+                </span>
+                {/* LOGICA VISUAL WIN/LOSE */}
+                {showResult ? (
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold mt-1 text-white ${isDraw ? 'bg-gray-500' : (iWin ? 'bg-green-600' : 'bg-red-600')}`}>
+                    {isDraw ? 'EMPATE' : (iWin ? 'WIN' : 'LOSE')}
+                  </span>
+                ) : (
+                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                    Total
+                  </span>
+                )}
+              </div>
 
-          {/* ⬇️ CANCHA VERDE (RESTAURADA) ⬇️ */}
+              {/* TÍTULO CENTRAL */}
+              <div className="flex flex-col items-center mx-4">
+                <CardTitle className="font-headline text-center text-xl">
+                  Duelo 1v1 - Fecha {matchup.match_day_number}
+                </CardTitle>
+                <CardDescription className="text-center">
+                  {profile?.username || '...'} vs. {opponentProfile?.username || 'Rival...'}
+                </CardDescription>
+                {showResult && (
+                   <span className="text-[10px] text-muted-foreground mt-1 font-medium border px-2 rounded-full">RESULTADO PARCIAL</span>
+                )}
+              </div>
+
+              {/* PUNTAJE RIVAL (DERECHA) */}
+              <div className="flex flex-col items-center w-24">
+                <span className="text-3xl font-bold text-destructive">
+                   {rivalTotalScore > 0 ? rivalTotalScore.toFixed(1) : '0.0'}
+                </span>
+                {/* LOGICA VISUAL WIN/LOSE (INVERTIDA PARA RIVAL) */}
+                {showResult ? (
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold mt-1 text-white ${isDraw ? 'bg-gray-500' : (!iWin ? 'bg-green-600' : 'bg-red-600')}`}>
+                    {isDraw ? 'EMPATE' : (!iWin ? 'WIN' : 'LOSE')}
+                  </span>
+                ) : (
+                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                    Rival
+                  </span>
+                )}
+              </div>
+
+            </div>
+          </CardHeader>
+          {/* ⬆️ FIN DEL HEADER ⬆️ */}
+
           <CardContent className="p-0 relative h-full">
             <div className="absolute inset-0 rotate-90 scale-[1.1] origin-center translate-y-[-45px]">
               <FootballPitch />
             </div>
-          {/* ⬆️ FIN DE LA CANCHA ⬆️ */}
 
             <div className="relative h-full text-xs">
-              {/* MI EQUIPO (DINÁMICO) */}
+              {/* MI EQUIPO */}
               {hasLineup ? (
                 myTeam.map((slot, index) => {
-                  // --- ⬇️ CORRECCIÓN AQUÍ: Añadido '?' ⬇️ ---
                   const score = slot.player?.player_scores?.[0]?.score;
                   return slot.player ? (
                     <PitchPlayerSlot
@@ -313,7 +336,7 @@ export function MatchOfTheDay({
                       top={slot.top}
                       left={slot.left}
                       teamLogoUrl={slot.player.teams?.logo_url}
-                      score={score} // <-- SE PASA EL SCORE
+                      score={score}
                     />
                   ) : (
                     <PitchPlayerSlot key={`empty-mine-${index}`} position="???" name="---" photo_url={null} top={slot.top} left={slot.left} teamLogoUrl={null} score={null} />
@@ -327,10 +350,9 @@ export function MatchOfTheDay({
                 </div>
               )}
 
-              {/* EQUIPO RIVAL (DINÁMICO) */}
+              {/* EQUIPO RIVAL */}
               {hasRivalLineup ? (
                 rivalTeam.map((slot, index) => {
-                  // --- ⬇️ CORRECCIÓN AQUÍ: Añadido '?' ⬇️ ---
                   const score = slot.player?.player_scores?.[0]?.score;
                   return slot.player ? (
                     <PitchPlayerSlot
@@ -342,14 +364,14 @@ export function MatchOfTheDay({
                       left={slot.left}
                       isRival
                       teamLogoUrl={slot.player.teams?.logo_url}
-                      score={score} // <-- SE PASA EL SCORE
+                      score={score}
                     />
                   ) : (
-                     <PitchPlayerSlot key={`empty-rival-${index}`} position="???" name="---" photo_url={null} top={slot.top} left={slot.left} isRival teamLogoUrl={null} score={null} />
+                      <PitchPlayerSlot key={`empty-rival-${index}`} position="???" name="---" photo_url={null} top={slot.top} left={slot.left} isRival teamLogoUrl={null} score={null} />
                   );
                 })
               ) : (
-                 <div className="absolute top-1/4 right-1/4 w-48 text-center p-4 bg-destructive/20 rounded-lg">
+                  <div className="absolute top-1/4 right-1/4 w-48 text-center p-4 bg-destructive/20 rounded-lg">
                   <p className="font-semibold text-destructive-foreground">
                     Tu rival ({opponentProfile?.username || '...'}) aún no ha guardado su alineación.
                   </p>
@@ -361,7 +383,7 @@ export function MatchOfTheDay({
         
         {/* Suplentes */}
         <div className="w-full flex justify-between mt-4 px-8">
-          {/* Suplentes de mi equipo (izquierda) */}
+          {/* Suplentes de mi equipo */}
           <div className="flex gap-3">
             {myBenchPlayers.length > 0
               ? myBenchPlayers.map((p) => (
@@ -371,16 +393,16 @@ export function MatchOfTheDay({
                     position={p.position}
                     photo_url={p.photo_url}
                     teamLogoUrl={p.teams?.logo_url}
-                    score={p.player_scores?.[0]?.score} // <-- CORRECCIÓN AQUÍ
+                    score={p.player_scores?.[0]?.score}
                   />
                 ))
               : Array(4).fill(0).map((_, i) => (
                   <BenchPlayer key={`bench-mine-${i}`} name="---" position="???" photo_url={null} teamLogoUrl={null} score={null} />
                 ))}
           </div>
-          {/* Suplentes rival (derecha) */}
+          {/* Suplentes rival */}
           <div className="flex gap-3">
-             {rivalBenchPlayers.length > 0
+              {rivalBenchPlayers.length > 0
               ? rivalBenchPlayers.map((p) => (
                   <BenchPlayer
                     key={p.id}
@@ -389,7 +411,7 @@ export function MatchOfTheDay({
                     photo_url={p.photo_url}
                     isRival
                     teamLogoUrl={p.teams?.logo_url}
-                    score={p.player_scores?.[0]?.score} // <-- CORRECCIÓN AQUÍ
+                    score={p.player_scores?.[0]?.score}
                   />
                 ))
               : Array(4).fill(0).map((_, i) => (
@@ -399,7 +421,7 @@ export function MatchOfTheDay({
         </div>
       </div>
 
-      {/* ⬇️ DERECHA (PERFIL RIVAL) - RESTAURADO ⬇️ */}
+      {/* DERECHA (PERFIL RIVAL) */}
       <div className="flex flex-col gap-4">
         <ProfilePlaceholder title={`PERFIL RIVAL (${opponentProfile?.username || 'Rival...'})`} />
         <Card>

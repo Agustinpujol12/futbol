@@ -150,7 +150,7 @@ export default function DashboardPage() {
         const { data: standingsData, error: standingsErr } = await supabase
           .from('league_members')
           .select(`
-            user_id,
+            *,
             profiles ( username )
           `)
           .eq('league_id', selectedLeague.id);
