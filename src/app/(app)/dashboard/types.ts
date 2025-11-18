@@ -56,6 +56,7 @@ export type DailyLineup = {
   game_day_id: string;
   final_selection_ids: string[];
   updated_at?: string;
+  boosted_player_id?: string | null;
 };
 
 export type Profile = {

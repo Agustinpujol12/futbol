@@ -1,5 +1,5 @@
 // src/app/(app)/dashboard/page.tsx
-// --- ARCHIVO COMPLETO Y CORREGIDO (CON CONSULTAS DE SCORE) ---
+// --- ARCHIVO COMPLETO Y FINAL ---
 
 'use client';
 
@@ -36,7 +36,6 @@ type Matchup = {
   match_day_number: number;
 };
 
-// --- (Tu componente AestheticCountdownTimer no cambia) ---
 function AestheticCountdownTimer() {
   return (
     <div className="flex items-center gap-2">
@@ -64,11 +63,14 @@ export default function DashboardPage() {
   const [squad, setSquad] = useState<Player[]>([]);
   const [lineup, setLineup] = useState<DailyLineup | null>(null);
 
-  // --- DATOS DEL RIVAL (NUEVOS ESTADOS) ---
+  // --- DATOS DEL RIVAL ---
   const [matchup, setMatchup] = useState<Matchup | null>(null);
   const [opponentProfile, setOpponentProfile] = useState<Profile | null>(null);
   const [opponentSquad, setOpponentSquad] = useState<Player[]>([]);
   const [opponentLineup, setOpponentLineup] = useState<DailyLineup | null>(null);
+
+  // --- ESTRATEGIA (Nuevo Estado) ---
+  const [activeCardValue, setActiveCardValue] = useState<number>(1); // Multiplicador de carta (1 por defecto)
 
   // --- ESTADOS DE CARGA ---
   const [loadingLeagues, setLoadingLeagues] = useState(true);
@@ -77,12 +79,9 @@ export default function DashboardPage() {
   const [standings, setStandings] = useState<any[]>([]); 
   const [leagueFixture, setLeagueFixture] = useState<any[]>([]);
 
-  const [myStrategyCard, setMyStrategyCard] = useState<any>(null); 
-  const [opponentStrategyCard, setOpponentStrategyCard] = useState<any>(null);
-  
   const supabase = createClient();
 
-  // --- EFECTO 1: Cargar usuario y sus ligas inscritas (TU CÓDIGO ORIGINAL) ---
+  // --- EFECTO 1: Cargar usuario y sus ligas ---
   useEffect(() => {
     const fetchUserAndLeagues = async () => {
       setLoadingLeagues(true);
@@ -122,17 +121,18 @@ export default function DashboardPage() {
     fetchUserAndLeagues();
   }, [supabase]);
 
-  // --- EFECTO 2: Cargar datos de la liga seleccionada (ACTUALIZADO) ---
+  // --- EFECTO 2: Cargar datos de la liga seleccionada ---
   useEffect(() => {
     if (!selectedLeague || !userId) return;
 
     const fetchLeagueData = async () => {
       setLoadingLeagueData(true);
       setErrorMsg(null);
-      // Resetea TODOS los datos
+      // Resetear datos
       setGameDay(null); setSquad([]); setLineup(null);
       setMatchup(null); setOpponentProfile(null); setOpponentSquad([]); setOpponentLineup(null);
       setLeagueFixture([]);
+      setActiveCardValue(1); // Resetear multiplicador
 
       try {
         const GAME_DAY_ID = 'c77cd2ef-2c05-4e52-9c62-69496a39903b'; // Tu ID fijo
@@ -146,13 +146,10 @@ export default function DashboardPage() {
         if (gdErr || !gameDayData) throw new Error('Jornada no encontrada.');
         setGameDay(gameDayData);
 
-        // 1.5. Traer la tabla de posiciones (miembros y sus perfiles)
+        // 1.5. Traer Tabla de Posiciones (con *)
         const { data: standingsData, error: standingsErr } = await supabase
           .from('league_members')
-          .select(`
-            *,
-            profiles ( username )
-          `)
+          .select('*, profiles ( username )') // <--- IMPORTANTE: Traer todo
           .eq('league_id', selectedLeague.id);
         
         if (standingsErr) {
@@ -161,25 +158,25 @@ export default function DashboardPage() {
         }
         setStandings(standingsData || []);
 
-        // --- INICIO: LÓGICA DEL FIXTURE ---
-      const { data: fixtureData, error: fixtureErr } = await supabase
-        .from('league_matchups')
-        .select(`
-          match_day_number,
-          home_score,
-          away_score,
-          home_user:profiles!home_user_id ( username ),
-          away_user:profiles!away_user_id ( username )
-        `)
-        .eq('league_id', selectedLeague.id)
-        .order('match_day_number', { ascending: true });
-      
-      if (fixtureErr) {
-        console.error("Error fetching fixture:", fixtureErr);
-        throw new Error('No se pudo cargar el fixture.');
-      }
-      setLeagueFixture(fixtureData || []);
-        // 2. Encontrar el partido y el ID del rival
+        // 1.8. Traer Fixture
+        const { data: fixtureData, error: fixtureErr } = await supabase
+          .from('league_matchups')
+          .select(`
+            match_day_number,
+            home_score, away_score,
+            home_user:profiles!home_user_id ( username ),
+            away_user:profiles!away_user_id ( username )
+          `)
+          .eq('league_id', selectedLeague.id)
+          .order('match_day_number', { ascending: true });
+        
+        if (fixtureErr) {
+          console.error("Error fetching fixture:", fixtureErr);
+          throw new Error('No se pudo cargar el fixture.');
+        }
+        setLeagueFixture(fixtureData || []);
+
+        // 2. Encontrar Partido y Rival
         const { data: matchupData, error: matchupErr } = await supabase
           .from('league_matchups')
           .select('*') 
@@ -198,7 +195,7 @@ export default function DashboardPage() {
             : matchupData.home_user_id;
         }
 
-        // 3. Si encontramos un rival, buscar sus datos
+        // 3. Datos del Rival
         if (opponentUserId) {
           const { data: oppProfileData } = await supabase.from('profiles').select('*').eq('id', opponentUserId).single();
           setOpponentProfile(oppProfileData);
@@ -206,12 +203,10 @@ export default function DashboardPage() {
           const { data: oppSquadData } = await supabase.from('daily_squads').select('player_ids').eq('user_id', opponentUserId).eq('game_day_id', GAME_DAY_ID).eq('league_id', selectedLeague.id).single();
           
           if (oppSquadData && oppSquadData.player_ids) {
-            
-            // --- ⬇️ CAMBIO AQUÍ: Añadida la consulta de player_scores ⬇️ ---
             const { data: oppPlayersData, error: oppPlayersErr } = await supabase
               .from('players')
-              .select('*, teams ( name, pot, logo_url ), player_scores ( score )') // 1. Pedir scores
-              .eq('player_scores.game_day_id', GAME_DAY_ID) // 2. Filtrar scores
+              .select('*, teams ( name, pot, logo_url ), player_scores ( score )')
+              .eq('player_scores.game_day_id', GAME_DAY_ID)
               .in('id', oppSquadData.player_ids);
             
             if (oppPlayersErr) {
@@ -219,14 +214,13 @@ export default function DashboardPage() {
               throw new Error('No se pudieron cargar los jugadores del rival.');
             }
             setOpponentSquad(oppPlayersData || []);
-            // --- ⬆️ FIN DEL CAMBIO ⬆️ ---
             
             const { data: oppLineupData } = await supabase.from('daily_lineups').select('*').eq('user_id', opponentUserId).eq('game_day_id', GAME_DAY_ID).eq('league_id', selectedLeague.id).single();
             setOpponentLineup(oppLineupData || null);
           }
         }
 
-        // 4. Traer datos del USUARIO LOGUEADO
+        // 4. Datos del USUARIO LOGUEADO
         const { data: squadData, error: squadErr } = await supabase
           .from('daily_squads')
           .select('player_ids')
@@ -240,11 +234,10 @@ export default function DashboardPage() {
         } else {
           const playerIds: string[] = squadData.player_ids || [];
           
-          // --- ⬇️ CAMBIO AQUÍ: Añadida la consulta de player_scores ⬇️ ---
           const { data: playersData, error: playersErr } = await supabase
             .from('players')
-            .select('*, teams ( name, pot, logo_url ), player_scores ( score )') // 1. Pedir scores
-            .eq('player_scores.game_day_id', GAME_DAY_ID) // 2. Filtrar scores
+            .select('*, teams ( name, pot, logo_url ), player_scores ( score )')
+            .eq('player_scores.game_day_id', GAME_DAY_ID)
             .in('id', playerIds);
             
           if (playersErr) {
@@ -252,7 +245,6 @@ export default function DashboardPage() {
             throw new Error('No se pudieron cargar los jugadores del usuario.');
           }
           setSquad(playersData || []);
-          // --- ⬆️ FIN DEL CAMBIO ⬆️ ---
 
           const { data: lineupData } = await supabase
             .from('daily_lineups')
@@ -262,6 +254,28 @@ export default function DashboardPage() {
             .eq('league_id', selectedLeague.id)
             .single();
           setLineup(lineupData || null);
+        }
+
+// 5. 🃏 BUSCAR CARTA ACTIVA (MULTIPLICADOR) - CORREGIDO
+        const { data: activeCardData } = await supabase
+          .from('user_match_cards')
+          .select(`
+             card_id,
+             strategy_cards ( effect_value )
+          `)
+          .eq('user_id', userId)
+          .eq('game_day_id', GAME_DAY_ID)
+          .single();
+
+        if (activeCardData && activeCardData.strategy_cards) {
+           // ⚠️ CORRECCIÓN AQUÍ:
+           // Supabase a veces devuelve esto como array. Verificamos y accedemos al primero [0].
+           const strategies = activeCardData.strategy_cards as any; 
+           const effect = Array.isArray(strategies) ? strategies[0]?.effect_value : strategies?.effect_value;
+           
+           setActiveCardValue(Number(effect || 1));
+        } else {
+           setActiveCardValue(1); 
         }
 
       } catch (err: any) {
@@ -274,11 +288,11 @@ export default function DashboardPage() {
     fetchLeagueData();
   }, [selectedLeague, userId, supabase]);
 
-  // --- RENDERIZADO (sin cambios) ---
+  // --- RENDERIZADO ---
   return (
     <div className="container mx-auto py-8">
       
-      {/* Header y Grid de Ligas (TU CÓDIGO ORIGINAL) */}
+      {/* Header y Grid de Ligas */}
       <div className="mb-8 text-center">
         <h1 className="text-4xl font-bold tracking-tight font-headline">Tu Dashboard</h1>
         <p className="text-muted-foreground max-w-2xl mx-auto mt-2">
@@ -397,30 +411,31 @@ export default function DashboardPage() {
                         gameDay={gameDay} 
                       />
                     </TabsContent>
-{/* --- Partido del Día (Pasa TODAS las props) --- */}
-<TabsContent value="partido">
-  <MatchOfTheDay
-    profile={profile}
-    lineup={lineup}
-    squad={squad}
-    opponentProfile={opponentProfile}
-    opponentLineup={opponentLineup}
-    opponentSquad={opponentSquad}
-    matchup={matchup}
-    leagueId={selectedLeague?.id || null}
-    gameDay={gameDay}
-  />
-</TabsContent>
 
-{/* --- Estrategia --- */}
-                <TabsContent value="estrategia">
-                  <StrategyCardManager
-                    profile={profile}
-                    matchup={matchup}
-                    gameDay={gameDay}
-                    leagueId={selectedLeague?.id || null}
-                  />
-                </TabsContent>
+                    {/* --- PARTIDO DEL DÍA (CON EL MULTIPLICADOR NUEVO) --- */}
+                    <TabsContent value="partido">
+                      <MatchOfTheDay
+                        profile={profile}
+                        lineup={lineup}
+                        squad={squad}
+                        opponentProfile={opponentProfile}
+                        opponentLineup={opponentLineup}
+                        opponentSquad={opponentSquad}
+                        matchup={matchup}
+                        leagueId={selectedLeague?.id || null}
+                        gameDay={gameDay}
+                        activeCardMultiplier={activeCardValue} // ⚠️ AQUÍ SE PASA LA MAGIA
+                      />
+                    </TabsContent>
+
+                    <TabsContent value="estrategia">
+                      <StrategyCardManager
+                        profile={profile}
+                        matchup={matchup}
+                        gameDay={gameDay}
+                        leagueId={selectedLeague?.id || null}
+                      />
+                    </TabsContent>
                   </Tabs>
                 )}
 

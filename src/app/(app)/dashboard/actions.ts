@@ -169,3 +169,23 @@ async function updateMemberStats(supabase: any, leagueId: string, userId: string
         .eq('league_id', leagueId)
         .eq('user_id', userId);
 }
+
+export async function saveBoostedPlayerAction(
+  lineupId: string, 
+  playerId: string | null
+) {
+  const supabase = createClient();
+  
+  const { error } = await supabase
+    .from('daily_lineups')
+    .update({ boosted_player_id: playerId })
+    .eq('id', lineupId);
+
+  if (error) {
+    console.error('Error saving boosted player:', error);
+    return { error: 'No se pudo guardar la selección.' };
+  }
+
+  revalidatePath('/dashboard');
+  return { success: true };
+}

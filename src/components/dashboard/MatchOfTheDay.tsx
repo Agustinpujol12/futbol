@@ -1,8 +1,6 @@
-// src/components/dashboard/MatchOfTheDay.tsx
-// --- ARCHIVO FINAL: ESTRUCTURA ORIGINAL + LÓGICA WIN/LOSE ---
-
 'use client';
 
+import { useState, useEffect } from 'react';
 import {
   Card,
   CardHeader,
@@ -13,6 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { FootballPitch } from './FootballPitch';
 import { StrategyCardManager } from '@/components/strategy/strategy-cards';
+import { saveBoostedPlayerAction } from '@/app/(app)/dashboard/actions'; // ⚠️ IMPORTANTE: La acción
 import {
   type Player,
   type DailyLineup,
@@ -28,7 +27,39 @@ const formatName = (name: string) => {
   return name;
 };
 
-// --- COMPONENTES AUXILIARES ---
+// --- COMPONENTE: CURSOR MÁGICO (AUREOLA) ---
+function MagicCursor({ active }: { active: boolean }) {
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+
+  useEffect(() => {
+    const updatePosition = (e: MouseEvent) => {
+      setPosition({ x: e.clientX, y: e.clientY });
+    };
+    
+    if (active) {
+      window.addEventListener('mousemove', updatePosition);
+    }
+    return () => window.removeEventListener('mousemove', updatePosition);
+  }, [active]);
+
+  if (!active) return null;
+
+  return (
+    <div
+      className="fixed pointer-events-none z-50 flex items-center justify-center"
+      style={{ 
+        left: position.x, 
+        top: position.y, 
+        transform: 'translate(-50%, -50%)' 
+      }}
+    >
+      <div className="w-12 h-12 rounded-full border-2 border-yellow-400 animate-ping opacity-75 absolute"></div>
+      <div className="w-4 h-4 rounded-full bg-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.8)]"></div>
+    </div>
+  );
+}
+
+// --- COMPONENTE: PLACEHOLDER PERFIL ---
 function ProfilePlaceholder({ title }: { title: string }) {
   return (
     <Card className="h-full">
@@ -43,11 +74,32 @@ function ProfilePlaceholder({ title }: { title: string }) {
   );
 }
 
-// --- PitchPlayerSlot ---
+// --- COMPONENTE: SLOT DE JUGADOR EN CANCHA ---
 function PitchPlayerSlot({ 
-  position, name, photo_url, top, left, isRival = false, teamLogoUrl, score 
+  position, 
+  name, 
+  photo_url, 
+  top, 
+  left, 
+  isRival = false, 
+  teamLogoUrl, 
+  score,
+  // Props de interacción
+  isSelectionMode = false,
+  isSelected = false,
+  onSelect
 }: { 
-  position: string; name: string; photo_url: string | null | undefined; top: string; left: string; isRival?: boolean; teamLogoUrl: string | null | undefined; score: number | null | undefined;
+  position: string; 
+  name: string; 
+  photo_url: string | null | undefined; 
+  top: string; 
+  left: string; 
+  isRival?: boolean; 
+  teamLogoUrl: string | null | undefined; 
+  score: number | null | undefined;
+  isSelectionMode?: boolean;
+  isSelected?: boolean;
+  onSelect?: () => void;
 }) {
   const scoreValue = (score !== null && score !== undefined) ? score : null;
   const scoreColor = 
@@ -56,10 +108,32 @@ function PitchPlayerSlot({
     scoreValue >= 6 ? 'bg-yellow-600 border-yellow-400' :
     'bg-red-600 border-red-400';
 
+  // Estilos dinámicos
+  const cursorStyle = isSelectionMode && !isRival ? 'cursor-pointer' : 'cursor-default';
+  
+  // Efecto de "Elegido"
+  const selectedStyles = isSelected 
+    ? 'ring-4 ring-yellow-400 shadow-[0_0_20px_rgba(250,204,21,0.6)] scale-125 z-50 transition-all duration-300' 
+    : isSelectionMode && !isRival 
+      ? 'hover:scale-110 hover:ring-2 hover:ring-yellow-200 transition-all' 
+      : '';
+
   return (
-    <div className="absolute" style={{ top: `calc(${top} - 25px)`, left: `${left}`, transform: 'translateX(-50%)' }}>
+    <div 
+      className={`absolute ${cursorStyle} ${selectedStyles} rounded-full transition-all duration-300`}
+      style={{ top: `calc(${top} - 25px)`, left: `${left}`, transform: 'translateX(-50%)' }}
+      onClick={() => {
+        if (isSelectionMode && !isRival && onSelect) {
+          onSelect();
+        }
+      }}
+    >
       <div className="flex flex-col items-center">
         <div className="relative">
+          {isSelected && (
+             <div className="absolute -top-6 left-1/2 -translate-x-1/2 animate-bounce text-xl">✨</div>
+          )}
+
           {teamLogoUrl && (
               <img src={teamLogoUrl} alt="Team Logo" className="absolute -top-1 -left-1 w-4 h-4 rounded-full object-cover border border-gray-300 bg-white shadow-sm z-10" />
           )}
@@ -74,7 +148,7 @@ function PitchPlayerSlot({
             </div>
           )}
         </div>
-        <span className="text-xs font-semibold bg-black/50 text-white px-1.5 py-0.5 rounded-md text-center whitespace-nowrap">
+        <span className={`text-xs font-semibold ${isSelected ? 'bg-yellow-500 text-black scale-110' : 'bg-black/50 text-white'} px-1.5 py-0.5 rounded-md text-center whitespace-nowrap transition-colors mt-1`}>
           {formatName(name)}
         </span>
       </div>
@@ -82,7 +156,7 @@ function PitchPlayerSlot({
   );
 }
 
-// --- BenchPlayer ---
+// --- COMPONENTE: JUGADOR BANCA ---
 function BenchPlayer({ 
   name, position, photo_url, isRival = false, teamLogoUrl, score 
 }: { 
@@ -130,6 +204,7 @@ interface MatchOfTheDayProps {
   matchup: any | null;
   leagueId: string | null; 
   gameDay: GameDay | null;
+  activeCardMultiplier?: number; // ⚠️ NUEVA PROP: Valor del multiplicador (x2, x3, etc.)
 }
 
 // --- COMPONENTE PRINCIPAL ---
@@ -143,8 +218,23 @@ export function MatchOfTheDay({
   matchup,
   leagueId,
   gameDay,
+  activeCardMultiplier = 1, // Valor por defecto es 1 (sin efecto)
 }: MatchOfTheDayProps) {
+
+  // 1. ESTADOS PARA LA CARTA
+  const [isApplyingCard, setIsApplyingCard] = useState(false);
   
+  // Inicializar el estado con lo que venga de la DB (si ya guardó uno)
+  const [selectedCardPlayerId, setSelectedCardPlayerId] = useState<string | null>(null);
+
+  // Efecto para sincronizar estado inicial cuando carga 'lineup'
+  useEffect(() => {
+    if (lineup && lineup.boosted_player_id) {
+        setSelectedCardPlayerId(lineup.boosted_player_id);
+    }
+  }, [lineup]);
+
+
   // (Lógica de mi equipo)
   const hasLineup = lineup && lineup.final_selection_ids && lineup.final_selection_ids.length === 8;
   let myTeamPlayers: Player[] = [];
@@ -193,12 +283,17 @@ export function MatchOfTheDay({
     { player: rivalFwdPlayers[1], top: '52%', left: '54%' },
   ];
 
-  // --- CÁLCULO DE PUNTAJES TOTALES ---
-  // Usamos una validación segura por si el array player_scores viene vacío
+  // --- CÁLCULO DE PUNTAJES TOTALES (MODIFICADO CON MULTIPLICADOR) ---
   const myTotalScore = myTeamPlayers.reduce((acc, player) => {
-    const score = (player.player_scores && player.player_scores.length > 0) 
+    let score = (player.player_scores && player.player_scores.length > 0) 
       ? player.player_scores[0].score 
       : 0;
+
+    // ⚡ LÓGICA DE MULTIPLICACIÓN EN FRONTEND
+    if (player.id === selectedCardPlayerId) {
+       score = score * activeCardMultiplier;
+    }
+
     return acc + score;
   }, 0);
 
@@ -206,31 +301,67 @@ export function MatchOfTheDay({
     const score = (player.player_scores && player.player_scores.length > 0) 
       ? player.player_scores[0].score 
       : 0;
+    
+    // NOTA: Aquí podrías replicar la lógica para el rival si tuvieras su `boosted_player_id`
+    // Por ahora lo dejamos simple.
     return acc + score;
   }, 0);
 
-  // --- LÓGICA WIN / LOSE (PROVISORIA) ---
-  // Se mostrará el resultado cuando la suma de puntajes sea mayor a 0.
-  // Esto simula que la fecha "ha comenzado/terminado".
+  // --- LÓGICA WIN / LOSE ---
   const showResult = myTotalScore > 0 || rivalTotalScore > 0;
-  
   const iWin = myTotalScore > rivalTotalScore;
   const isDraw = myTotalScore === rivalTotalScore;
+
+  // 2. HANDLER PARA EL CLICK EN "APLICAR"
+  const handleApplyClick = () => {
+    if (isApplyingCard) {
+      setIsApplyingCard(false); // Cancelar
+      // Si cancela, volvemos al estado original guardado (o null)
+      setSelectedCardPlayerId(lineup?.boosted_player_id || null);
+    } else {
+      setIsApplyingCard(true); // Activar modo magia
+    }
+  };
+
+  // 3. HANDLER PARA SELECCIONAR JUGADOR Y GUARDAR
+  const handlePlayerSelect = async (playerId: string) => {
+    if (isApplyingCard && lineup) {
+      // Optimistic UI Update
+      const newSelection = selectedCardPlayerId === playerId ? null : playerId;
+      setSelectedCardPlayerId(newSelection);
+      setIsApplyingCard(false); // Terminar modo selección
+
+      // Guardar en Servidor
+      console.log(`🪄 Guardando carta para el jugador: ${playerId}...`);
+      const result = await saveBoostedPlayerAction(lineup.id, newSelection);
+
+      if (!result.success) {
+        console.error("❌ Error al guardar carta");
+        // Revertir si falla
+        setSelectedCardPlayerId(lineup.boosted_player_id || null);
+      } else {
+        console.log("✅ Carta guardada exitosamente");
+      }
+    }
+  };
+
 
   if (!matchup) {
     return (
       <Card className="xl:col-span-5">
         <CardContent className="pt-6 text-center text-muted-foreground">
           <p className="text-lg font-semibold">No tienes un partido programado para esta fecha.</p>
-          <p>Esto puede suceder si la liga tiene un número impar de jugadores o si el administrador aún no ha generado la fecha.</p>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-5 gap-4 mb-16">
+    <div className="grid grid-cols-1 xl:grid-cols-5 gap-4 mb-16 relative">
       
+      {/* AUREOLA MÁGICA */}
+      <MagicCursor active={isApplyingCard} />
+
       {/* IZQUIERDA (MI PERFIL) */}
       <div className="flex flex-col gap-4">
         <ProfilePlaceholder
@@ -243,7 +374,7 @@ export function MatchOfTheDay({
               MI CARTA
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-4"> 
+          <CardContent className="p-4 flex flex-col gap-2"> 
             <StrategyCardManager
               profile={profile}
               matchup={matchup}
@@ -251,9 +382,24 @@ export function MatchOfTheDay({
               leagueId={leagueId}
               size="small" 
             />
-            <Button className="w-full mt-4 font-bold shadow-md transition-all">
-              APLICAR
+            
+            {/* BOTÓN DE APLICAR CARTA */}
+            <Button 
+              onClick={handleApplyClick}
+              className={`w-full mt-4 font-bold shadow-md transition-all ${isApplyingCard ? 'ring-2 ring-yellow-400 bg-yellow-500/10 text-yellow-600 hover:bg-yellow-500/20' : ''}`}
+              variant={isApplyingCard ? 'outline' : 'default'}
+            >
+              {isApplyingCard 
+                ? (selectedCardPlayerId ? "JUGADOR ELEGIDO" : "SELECCIONA UN JUGADOR...") 
+                : (selectedCardPlayerId ? "CAMBIAR SELECCIÓN" : "APLICAR")}
             </Button>
+
+            {selectedCardPlayerId && (
+               <p className="text-xs text-center text-yellow-600 font-semibold animate-pulse">
+                 ¡Carta activa sobre un jugador!
+               </p>
+            )}
+
           </CardContent>
         </Card>
       </div>
@@ -262,28 +408,22 @@ export function MatchOfTheDay({
       <div className="xl:col-span-3 flex flex-col items-center">
         <Card className="h-full min-h-[750px] overflow-hidden relative w-full">
           
-          {/* ⬇️ HEADER CON PUNTAJES Y LÓGICA WIN/LOSE ⬇️ */}
+          {/* HEADER */}
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between w-full px-2 sm:px-6">
-              
-              {/* PUNTAJE MÍO (IZQUIERDA) */}
               <div className="flex flex-col items-center w-24">
                 <span className="text-3xl font-bold text-primary">
                   {myTotalScore > 0 ? myTotalScore.toFixed(1) : '0.0'}
                 </span>
-                {/* LOGICA VISUAL WIN/LOSE */}
                 {showResult ? (
                   <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold mt-1 text-white ${isDraw ? 'bg-gray-500' : (iWin ? 'bg-green-600' : 'bg-red-600')}`}>
                     {isDraw ? 'EMPATE' : (iWin ? 'WIN' : 'LOSE')}
                   </span>
                 ) : (
-                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                    Total
-                  </span>
+                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Total</span>
                 )}
               </div>
 
-              {/* TÍTULO CENTRAL */}
               <div className="flex flex-col items-center mx-4">
                 <CardTitle className="font-headline text-center text-xl">
                   Duelo 1v1 - Fecha {matchup.match_day_number}
@@ -296,37 +436,42 @@ export function MatchOfTheDay({
                 )}
               </div>
 
-              {/* PUNTAJE RIVAL (DERECHA) */}
               <div className="flex flex-col items-center w-24">
                 <span className="text-3xl font-bold text-destructive">
                    {rivalTotalScore > 0 ? rivalTotalScore.toFixed(1) : '0.0'}
                 </span>
-                {/* LOGICA VISUAL WIN/LOSE (INVERTIDA PARA RIVAL) */}
                 {showResult ? (
                   <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold mt-1 text-white ${isDraw ? 'bg-gray-500' : (!iWin ? 'bg-green-600' : 'bg-red-600')}`}>
                     {isDraw ? 'EMPATE' : (!iWin ? 'WIN' : 'LOSE')}
                   </span>
                 ) : (
-                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                    Rival
-                  </span>
+                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Rival</span>
                 )}
               </div>
-
             </div>
           </CardHeader>
-          {/* ⬆️ FIN DEL HEADER ⬆️ */}
 
           <CardContent className="p-0 relative h-full">
             <div className="absolute inset-0 rotate-90 scale-[1.1] origin-center translate-y-[-45px]">
               <FootballPitch />
             </div>
 
-            <div className="relative h-full text-xs">
-              {/* MI EQUIPO */}
+            {/* DIMMER DE SELECCIÓN */}
+            {isApplyingCard && (
+               <div className="absolute inset-0 bg-black/40 z-10 pointer-events-none transition-all duration-500" />
+            )}
+
+            <div className="relative h-full text-xs z-20">
+              {/* MI EQUIPO (Interactuable) */}
               {hasLineup ? (
                 myTeam.map((slot, index) => {
-                  const score = slot.player?.player_scores?.[0]?.score;
+                  let score = slot.player?.player_scores?.[0]?.score;
+
+                  // ⚡ LÓGICA VISUAL EN CADA SLOT
+                  if (score !== undefined && score !== null && slot.player?.id === selectedCardPlayerId) {
+                    score = score * activeCardMultiplier;
+                  }
+
                   return slot.player ? (
                     <PitchPlayerSlot
                       key={slot.player.id}
@@ -336,7 +481,13 @@ export function MatchOfTheDay({
                       top={slot.top}
                       left={slot.left}
                       teamLogoUrl={slot.player.teams?.logo_url}
-                      score={score}
+                      
+                      score={score} // <--- Score multiplicado
+
+                      // Props de interacción
+                      isSelectionMode={isApplyingCard}
+                      isSelected={selectedCardPlayerId === slot.player.id}
+                      onSelect={() => handlePlayerSelect(slot.player!.id)}
                     />
                   ) : (
                     <PitchPlayerSlot key={`empty-mine-${index}`} position="???" name="---" photo_url={null} top={slot.top} left={slot.left} teamLogoUrl={null} score={null} />
@@ -344,13 +495,11 @@ export function MatchOfTheDay({
                 })
               ) : (
                 <div className="absolute top-1/4 left-1/4 w-48 text-center p-4 bg-primary/20 rounded-lg">
-                  <p className="font-semibold text-primary-foreground">
-                    Guarda tu alineación de 8 jugadores para verla aquí.
-                  </p>
+                  <p className="font-semibold text-primary-foreground">Guarda tu alineación para verla aquí.</p>
                 </div>
               )}
 
-              {/* EQUIPO RIVAL */}
+              {/* EQUIPO RIVAL (NO Interactuable) */}
               {hasRivalLineup ? (
                 rivalTeam.map((slot, index) => {
                   const score = slot.player?.player_scores?.[0]?.score;
@@ -372,9 +521,7 @@ export function MatchOfTheDay({
                 })
               ) : (
                   <div className="absolute top-1/4 right-1/4 w-48 text-center p-4 bg-destructive/20 rounded-lg">
-                  <p className="font-semibold text-destructive-foreground">
-                    Tu rival ({opponentProfile?.username || '...'}) aún no ha guardado su alineación.
-                  </p>
+                  <p className="font-semibold text-destructive-foreground">Tu rival aún no ha guardado su alineación.</p>
                 </div>
               )}
             </div>
@@ -383,40 +530,15 @@ export function MatchOfTheDay({
         
         {/* Suplentes */}
         <div className="w-full flex justify-between mt-4 px-8">
-          {/* Suplentes de mi equipo */}
           <div className="flex gap-3">
             {myBenchPlayers.length > 0
-              ? myBenchPlayers.map((p) => (
-                  <BenchPlayer
-                    key={p.id}
-                    name={p.name}
-                    position={p.position}
-                    photo_url={p.photo_url}
-                    teamLogoUrl={p.teams?.logo_url}
-                    score={p.player_scores?.[0]?.score}
-                  />
-                ))
-              : Array(4).fill(0).map((_, i) => (
-                  <BenchPlayer key={`bench-mine-${i}`} name="---" position="???" photo_url={null} teamLogoUrl={null} score={null} />
-                ))}
+              ? myBenchPlayers.map((p) => <BenchPlayer key={p.id} name={p.name} position={p.position} photo_url={p.photo_url} teamLogoUrl={p.teams?.logo_url} score={p.player_scores?.[0]?.score} />)
+              : Array(4).fill(0).map((_, i) => <BenchPlayer key={`bench-mine-${i}`} name="---" position="???" photo_url={null} teamLogoUrl={null} score={null} />)}
           </div>
-          {/* Suplentes rival */}
           <div className="flex gap-3">
               {rivalBenchPlayers.length > 0
-              ? rivalBenchPlayers.map((p) => (
-                  <BenchPlayer
-                    key={p.id}
-                    name={p.name}
-                    position={p.position}
-                    photo_url={p.photo_url}
-                    isRival
-                    teamLogoUrl={p.teams?.logo_url}
-                    score={p.player_scores?.[0]?.score}
-                  />
-                ))
-              : Array(4).fill(0).map((_, i) => (
-                  <BenchPlayer key={`bench-rival-${i}`} name="---" position="???" photo_url={null} isRival teamLogoUrl={null} score={null} />
-                ))}
+              ? rivalBenchPlayers.map((p) => <BenchPlayer key={p.id} name={p.name} position={p.position} photo_url={p.photo_url} isRival teamLogoUrl={p.teams?.logo_url} score={p.player_scores?.[0]?.score} />)
+              : Array(4).fill(0).map((_, i) => <BenchPlayer key={`bench-rival-${i}`} name="---" position="???" photo_url={null} isRival teamLogoUrl={null} score={null} />)}
           </div>
         </div>
       </div>
