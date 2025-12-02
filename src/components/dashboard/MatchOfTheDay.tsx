@@ -108,19 +108,29 @@ function PitchPlayerSlot({
     scoreValue >= 6 ? 'bg-yellow-600 border-yellow-400' :
     'bg-red-600 border-red-400';
 
-  // Estilos dinámicos
+  // Estilos del cursor
   const cursorStyle = isSelectionMode && !isRival ? 'cursor-pointer' : 'cursor-default';
   
-  // Efecto de "Elegido"
-  const selectedStyles = isSelected 
-    ? 'ring-4 ring-yellow-400 shadow-[0_0_20px_rgba(250,204,21,0.6)] scale-125 z-50 transition-all duration-300' 
+  // ⚡ CAMBIO 1: Estilos para el contenedor EXTERNO (Solo z-index y escala ligera)
+  // Ya NO aplicamos el 'ring' aquí.
+  const outerStyles = isSelected 
+    ? 'z-50 scale-110 transition-all duration-300' // Un pequeño aumento de tamaño general para destacar
+    : 'transition-all duration-300';
+
+  // ⚡ CAMBIO 2: Estilos para el CÍRCULO INTERNO (Aquí va la aureola)
+  // Aplicamos el anillo y la sombra directamente sobre el círculo.
+  const innerCircleStyles = isSelected
+    // Ring amarillo fuerte + sombra brillante
+    ? 'ring-[3px] ring-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.8)]'
     : isSelectionMode && !isRival 
-      ? 'hover:scale-110 hover:ring-2 hover:ring-yellow-200 transition-all' 
+      // Hover sutil si estamos eligiendo
+      ? 'group-hover:ring-2 group-hover:ring-yellow-200/60' 
       : '';
 
   return (
     <div 
-      className={`absolute ${cursorStyle} ${selectedStyles} rounded-full transition-all duration-300`}
+      // ⚡ Usamos 'group' para coordinar el hover
+      className={`absolute ${cursorStyle} ${outerStyles} group rounded-full`}
       style={{ top: `calc(${top} - 25px)`, left: `${left}`, transform: 'translateX(-50%)' }}
       onClick={() => {
         if (isSelectionMode && !isRival && onSelect) {
@@ -129,11 +139,11 @@ function PitchPlayerSlot({
       }}
     >
       <div className="flex flex-col items-center">
-        <div className="relative">
-          {isSelected && (
-             <div className="absolute -top-6 left-1/2 -translate-x-1/2 animate-bounce text-xl">✨</div>
-          )}
-
+        {/* ⚡ CAMBIO 3: Aplicamos los estilos al contenedor RELATIVE que envuelve la foto.
+            Añadimos 'rounded-full' y una transición suave.
+        */}
+        <div className={`relative rounded-full transition-all duration-300 ${innerCircleStyles}`}>
+          
           {teamLogoUrl && (
               <img src={teamLogoUrl} alt="Team Logo" className="absolute -top-1 -left-1 w-4 h-4 rounded-full object-cover border border-gray-300 bg-white shadow-sm z-10" />
           )}
@@ -148,7 +158,9 @@ function PitchPlayerSlot({
             </div>
           )}
         </div>
-        <span className={`text-xs font-semibold ${isSelected ? 'bg-yellow-500 text-black scale-110' : 'bg-black/50 text-white'} px-1.5 py-0.5 rounded-md text-center whitespace-nowrap transition-colors mt-1`}>
+        
+        {/* Etiqueta del nombre (fuera del anillo) */}
+        <span className={`text-xs font-semibold ${isSelected ? 'bg-yellow-500 text-black' : 'bg-black/50 text-white'} px-1.5 py-0.5 rounded-md text-center whitespace-nowrap transition-colors mt-1`}>
           {formatName(name)}
         </span>
       </div>
