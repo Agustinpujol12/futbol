@@ -60,15 +60,29 @@ function MagicCursor({ active }: { active: boolean }) {
 }
 
 // --- COMPONENTE: PLACEHOLDER PERFIL ---
-function ProfilePlaceholder({ title }: { title: string }) {
+function ProfilePlaceholder({ title, avatarUrl }: { title: string; avatarUrl?: string | null }) {
   return (
     <Card className="h-full">
-      <CardHeader><CardTitle className="font-headline text-lg text-center">{title}</CardTitle></CardHeader>
+      <CardHeader>
+        <CardTitle className="font-headline text-lg text-center">{title}</CardTitle>
+      </CardHeader>
       <CardContent className="text-center text-muted-foreground flex flex-col items-center">
-        <div className="w-20 h-20 bg-primary/10 rounded-full mx-auto mb-2 flex items-center justify-center border-2 border-primary/30">
-          <span className="text-3xl opacity-50">?</span>
-        </div>
-        <p className="font-semibold text-sm">Próximamente</p>
+        {avatarUrl ? (
+          // Si hay avatar, mostramos la imagen
+          <img 
+            src={avatarUrl} 
+            alt="Avatar" 
+            className="w-24 h-24 rounded-full object-cover border-4 border-primary/30 shadow-sm mb-2"
+          />
+        ) : (
+          // Si no, mostramos el placeholder original
+          <div className="w-20 h-20 bg-primary/10 rounded-full mx-auto mb-2 flex items-center justify-center border-2 border-primary/30">
+            <span className="text-3xl opacity-50">?</span>
+          </div>
+        )}
+        {/* Quitamos el texto "Próximamente" si ya hay avatar, o lo dejamos como prefieras. 
+            Lo dejaré condicional. */}
+        {!avatarUrl && <p className="font-semibold text-sm">Próximamente</p>}
       </CardContent>
     </Card>
   );
@@ -374,10 +388,11 @@ export function MatchOfTheDay({
       {/* AUREOLA MÁGICA */}
       <MagicCursor active={isApplyingCard} />
 
-      {/* IZQUIERDA (MI PERFIL) */}
+{/* IZQUIERDA (MI PERFIL) */}
       <div className="flex flex-col gap-4">
-        <ProfilePlaceholder
-          title={`MI PERFIL (${profile?.username || 'Cargando...'})`}
+        <ProfilePlaceholder 
+          title={`MI PERFIL (${profile?.username || 'Cargando...'})`} 
+          avatarUrl={profile?.avatar_url} // <--- PASAMOS TU AVATAR
         />
         
         <Card>
@@ -555,9 +570,12 @@ export function MatchOfTheDay({
         </div>
       </div>
 
-      {/* DERECHA (PERFIL RIVAL) */}
+{/* DERECHA (PERFIL RIVAL) */}
       <div className="flex flex-col gap-4">
-        <ProfilePlaceholder title={`PERFIL RIVAL (${opponentProfile?.username || 'Rival...'})`} />
+        <ProfilePlaceholder 
+          title={`PERFIL RIVAL (${opponentProfile?.username || 'Rival...'})`} 
+          avatarUrl={opponentProfile?.avatar_url} // <--- PASAMOS AVATAR RIVAL
+        />
         <Card>
           <CardHeader><CardTitle className="font-headline text-lg text-center">CARTA RIVAL</CardTitle></CardHeader>
           <CardContent className="text-center text-muted-foreground"><p>(Aquí irá la carta rival)</p></CardContent>

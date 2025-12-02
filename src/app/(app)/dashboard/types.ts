@@ -62,5 +62,6 @@ export type DailyLineup = {
 export type Profile = {
   id: string;
   username: string | null;
+  avatar_url?: string | null; // <--- Añade esto si no lo tienes
   // ... (cualquier otro campo que tengas)
 };

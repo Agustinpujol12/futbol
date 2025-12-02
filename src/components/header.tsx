@@ -1,15 +1,26 @@
 // src/components/header.tsx
-// --- ARCHIVO ACTUALIZADO CON TIENDA Y RENDIMIENTO ---
+// --- ARCHIVO ACTUALIZADO CON USERNAV ---
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/icons';
 import { createClient } from '@/lib/supabase/server';
-import LogoutButton from './LogoutButton';
+import { UserNav } from './user-nav'; // <-- Importamos el nuevo componente
 
 export async function Header() {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
+
+  // Buscar datos del perfil si hay usuario
+  let userProfile = null;
+  if (user) {
+    const { data } = await supabase
+      .from('profiles')
+      .select('username, avatar_url') // Asegúrate que estas columnas existen
+      .eq('id', user.id)
+      .single();
+    userProfile = data;
+  }
 
   return (
     <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/60 shadow-md">
@@ -32,44 +43,19 @@ export async function Header() {
         <nav className="flex justify-center gap-5">
           {user && (
             <>
-              <Button
-                asChild
-                variant="ghost"
-                className="font-medium text-base text-muted-foreground hover:text-primary hover:bg-primary/10 transition"
-              >
+              <Button asChild variant="ghost" className="font-medium text-base text-muted-foreground hover:text-primary hover:bg-primary/10 transition">
                 <Link href="/">Inicio</Link>
               </Button>
-              <Button
-                asChild
-                variant="ghost"
-                className="font-medium text-base text-muted-foreground hover:text-primary hover:bg-primary/10 transition"
-              >
+              <Button asChild variant="ghost" className="font-medium text-base text-muted-foreground hover:text-primary hover:bg-primary/10 transition">
                 <Link href="/leagues">Ligas</Link>
               </Button>
-              <Button
-                asChild
-                variant="ghost"
-                className="font-medium text-base text-muted-foreground hover:text-primary hover:bg-primary/10 transition"
-              >
+              <Button asChild variant="ghost" className="font-medium text-base text-muted-foreground hover:text-primary hover:bg-primary/10 transition">
                 <Link href="/dashboard">Dashboard</Link>
               </Button>
-
-              {/* --- NUEVO LINK: RENDIMIENTO --- */}
-              <Button
-                asChild
-                variant="ghost"
-                className="font-medium text-base text-muted-foreground hover:text-primary hover:bg-primary/10 transition"
-              >
-                {/* Puedes cambiar el href a /estadisticas si prefieres ese nombre */}
+              <Button asChild variant="ghost" className="font-medium text-base text-muted-foreground hover:text-primary hover:bg-primary/10 transition">
                 <Link href="/rendimiento">Rendimiento</Link>
               </Button>
-
-              {/* --- NUEVO LINK: TIENDA --- */}
-              <Button
-                asChild
-                variant="ghost"
-                className="font-medium text-base text-muted-foreground hover:text-primary hover:bg-primary/10 transition"
-              >
+              <Button asChild variant="ghost" className="font-medium text-base text-muted-foreground hover:text-primary hover:bg-primary/10 transition">
                 <Link href="/tienda">Tienda</Link>
               </Button>
             </>
@@ -79,28 +65,18 @@ export async function Header() {
         {/* --- DERECHA: USUARIO / AUTH --- */}
         <div className="flex justify-end items-center gap-4">
           {user ? (
-            <>
-              <span className="text-base hidden sm:inline text-muted-foreground">
-                Hola,{' '}
-                <span className="font-semibold text-foreground">
-                  {user.email?.split('@')[0]}
-                </span>
-              </span>
-              <LogoutButton />
-            </>
+            // --- CAMBIO: Usamos UserNav en lugar de texto plano ---
+            <UserNav 
+              email={user.email} 
+              username={userProfile?.username} 
+              avatarUrl={userProfile?.avatar_url} // Opcional
+            />
           ) : (
             <>
-              <Button
-                asChild
-                variant="ghost"
-                className="text-base font-medium text-muted-foreground hover:text-primary hover:bg-primary/10 transition"
-              >
+              <Button asChild variant="ghost" className="text-base font-medium text-muted-foreground hover:text-primary hover:bg-primary/10 transition">
                 <Link href="/login">Iniciar sesión</Link>
               </Button>
-              <Button
-                asChild
-                className="bg-primary text-white text-base px-5 py-2.5 hover:bg-primary/90 transition"
-              >
+              <Button asChild className="bg-primary text-white text-base px-5 py-2.5 hover:bg-primary/90 transition">
                 <Link href="/login">Registrarse</Link>
               </Button>
             </>
