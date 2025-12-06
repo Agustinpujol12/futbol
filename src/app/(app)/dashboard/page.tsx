@@ -1,5 +1,5 @@
 // src/app/(app)/dashboard/page.tsx
-// --- ARCHIVO COMPLETO Y FINAL ---
+// --- CÓDIGO FINAL CORREGIDO (Columnas: effect_type) ---
 
 'use client';
 
@@ -69,8 +69,9 @@ export default function DashboardPage() {
   const [opponentSquad, setOpponentSquad] = useState<Player[]>([]);
   const [opponentLineup, setOpponentLineup] = useState<DailyLineup | null>(null);
 
-  // --- ESTRATEGIA (Nuevo Estado) ---
-  const [activeCardValue, setActiveCardValue] = useState<number>(1); // Multiplicador de carta (1 por defecto)
+  // --- ESTRATEGIA ---
+  const [activeCardValue, setActiveCardValue] = useState<number>(1); 
+  const [opponentCard, setOpponentCard] = useState<any>(null);
 
   // --- ESTADOS DE CARGA ---
   const [loadingLeagues, setLoadingLeagues] = useState(true);
@@ -96,6 +97,7 @@ export default function DashboardPage() {
       const { data: profileData, error: profileErr } = await supabase.from('profiles').select('*').eq('id', user.id).single();
       if (profileErr) console.error('Error fetching profile:', profileErr);
       else setProfile(profileData);
+      
       const { data: memberData, error: memberErr } = await supabase.from('league_members').select('league_id').eq('user_id', user.id);
       if (memberErr) {
         console.error('Error fetching league_members:', memberErr);
@@ -132,10 +134,11 @@ export default function DashboardPage() {
       setGameDay(null); setSquad([]); setLineup(null);
       setMatchup(null); setOpponentProfile(null); setOpponentSquad([]); setOpponentLineup(null);
       setLeagueFixture([]);
-      setActiveCardValue(1); // Resetear multiplicador
+      setActiveCardValue(1); 
+      setOpponentCard(null);
 
       try {
-        const GAME_DAY_ID = 'c77cd2ef-2c05-4e52-9c62-69496a39903b'; // Tu ID fijo
+        const GAME_DAY_ID = 'c77cd2ef-2c05-4e52-9c62-69496a39903b'; 
 
         // 1. Traer game_day
         const { data: gameDayData, error: gdErr } = await supabase
@@ -146,10 +149,10 @@ export default function DashboardPage() {
         if (gdErr || !gameDayData) throw new Error('Jornada no encontrada.');
         setGameDay(gameDayData);
 
-        // 1.5. Traer Tabla de Posiciones (con *)
+        // 1.5. Traer Tabla de Posiciones
         const { data: standingsData, error: standingsErr } = await supabase
           .from('league_members')
-          .select('*, profiles ( username )') // <--- IMPORTANTE: Traer todo
+          .select('*, profiles ( username )')
           .eq('league_id', selectedLeague.id);
         
         if (standingsErr) {
@@ -197,6 +200,7 @@ export default function DashboardPage() {
 
         // 3. Datos del Rival
         if (opponentUserId) {
+          // A. Perfil y Squad
           const { data: oppProfileData } = await supabase.from('profiles').select('*').eq('id', opponentUserId).single();
           setOpponentProfile(oppProfileData);
 
@@ -217,6 +221,31 @@ export default function DashboardPage() {
             
             const { data: oppLineupData } = await supabase.from('daily_lineups').select('*').eq('user_id', opponentUserId).eq('game_day_id', GAME_DAY_ID).eq('league_id', selectedLeague.id).single();
             setOpponentLineup(oppLineupData || null);
+          }
+
+// --- B. CARTA DEL RIVAL (CÓDIGO LIMPIO) ---
+          const { data: oppCardData } = await supabase
+            .from('user_match_cards')
+            .select(`
+              card_id,
+              strategy_cards ( 
+                  name, 
+                  description, 
+                  effect_type, 
+                  tier
+              ) 
+            `) 
+            .eq('user_id', opponentUserId)
+            .eq('matchup_id', matchupData.id)
+            .maybeSingle();
+
+          if (oppCardData && oppCardData.strategy_cards) {
+              const cardInfo = Array.isArray(oppCardData.strategy_cards) 
+                  ? oppCardData.strategy_cards[0] 
+                  : oppCardData.strategy_cards;
+              setOpponentCard(cardInfo);
+          } else {
+              setOpponentCard(null);
           }
         }
 
@@ -256,7 +285,7 @@ export default function DashboardPage() {
           setLineup(lineupData || null);
         }
 
-// 5. 🃏 BUSCAR CARTA ACTIVA (MULTIPLICADOR) - CORREGIDO
+        // 5. MI CARTA (Multiplicador)
         const { data: activeCardData } = await supabase
           .from('user_match_cards')
           .select(`
@@ -265,14 +294,11 @@ export default function DashboardPage() {
           `)
           .eq('user_id', userId)
           .eq('game_day_id', GAME_DAY_ID)
-          .single();
+          .maybeSingle(); // Usamos maybeSingle para seguridad
 
         if (activeCardData && activeCardData.strategy_cards) {
-           // ⚠️ CORRECCIÓN AQUÍ:
-           // Supabase a veces devuelve esto como array. Verificamos y accedemos al primero [0].
            const strategies = activeCardData.strategy_cards as any; 
            const effect = Array.isArray(strategies) ? strategies[0]?.effect_value : strategies?.effect_value;
-           
            setActiveCardValue(Number(effect || 1));
         } else {
            setActiveCardValue(1); 
@@ -412,7 +438,6 @@ export default function DashboardPage() {
                       />
                     </TabsContent>
 
-                    {/* --- PARTIDO DEL DÍA (CON EL MULTIPLICADOR NUEVO) --- */}
                     <TabsContent value="partido">
                       <MatchOfTheDay
                         profile={profile}
@@ -424,16 +449,15 @@ export default function DashboardPage() {
                         matchup={matchup}
                         leagueId={selectedLeague?.id || null}
                         gameDay={gameDay}
-                        activeCardMultiplier={activeCardValue} // ⚠️ AQUÍ SE PASA LA MAGIA
+                        activeCardMultiplier={activeCardValue}
+                        opponentStrategyCard={opponentCard}
                       />
                     </TabsContent>
 
                     <TabsContent value="estrategia">
                       <StrategyCardManager
                         profile={profile}
-                        matchup={matchup}
-                        gameDay={gameDay}
-                        leagueId={selectedLeague?.id || null}
+                        mode="catalog"
                       />
                     </TabsContent>
                   </Tabs>

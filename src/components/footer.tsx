@@ -41,6 +41,9 @@ export function Footer() {
               <li>
                 <Link href="/tienda" className="hover:text-primary transition-colors">Tienda</Link>
               </li>
+              <li>
+                <Link href="/fixturemundial" className="hover:text-primary transition-colors">Mundial 2026</Link>
+              </li>
             </ul>
           </div>
 

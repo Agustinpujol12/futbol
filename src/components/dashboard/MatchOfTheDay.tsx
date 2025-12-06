@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { FootballPitch } from './FootballPitch';
+
 import { StrategyCardManager } from '@/components/strategy/strategy-cards';
 import { saveBoostedPlayerAction } from '@/app/(app)/dashboard/actions'; // ⚠️ IMPORTANTE: La acción
 import {
@@ -18,6 +19,10 @@ import {
   type Profile,
   type GameDay,
 } from '@/app/(app)/dashboard/types';
+import { EyeOff, Zap, Star, TrendingDown } from 'lucide-react'; // Asegúrate de tener esta línea
+import DuelChat from '@/app/(app)/dashboard/components/DuelChat';
+
+
 
 // --- UTILIDADES ---
 const formatName = (name: string) => {
@@ -219,6 +224,73 @@ function BenchPlayer({
   );
 }
 
+function RivalCardDisplay({ card }: { card: any }) {
+  if (!card) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full w-full p-6 text-muted-foreground border-2 border-dashed border-zinc-700 rounded-2xl bg-zinc-900/30">
+        <EyeOff className="w-8 h-8 mb-2 opacity-50" />
+        <p className="text-xs">Sin carta</p>
+      </div>
+    );
+  }
+
+  // 1. OBTENER EL TIER DESDE LA DB (Directo y limpio)
+  // Si por alguna razón viene vacío, usamos 'red' por defecto.
+  const tier = card.tier || 'red'; 
+
+  // 2. DICCIONARIO DE ESTILOS
+  // Aquí defines cómo se ve cada "tier" visualmente.
+  const themes: any = {
+      gold: { 
+          border: "border-yellow-400", 
+          text: "text-yellow-400", 
+          bg: "from-yellow-500/40 via-yellow-500/20 to-yellow-500/10", 
+          iconColor: "text-amber-500",
+          Icon: Star
+      },
+      emerald: { 
+          border: "border-emerald-500", 
+          text: "text-emerald-400", 
+          bg: "from-emerald-500/40 via-emerald-500/20 to-emerald-500/10", 
+          iconColor: "text-emerald-400",
+          Icon: Zap
+      },
+      red: { 
+          border: "border-red-600",    
+          text: "text-red-500",     
+          bg: "from-red-600/40 via-red-600/20 to-red-600/10",       
+          iconColor: "text-red-500",
+          Icon: TrendingDown
+      }
+  };
+
+  // Seleccionamos el tema (si el tier no existe, usa red)
+  const theme = themes[tier] || themes.red;
+  const IconComponent = theme.Icon;
+
+  return (
+    <Card className={`
+       w-full h-full p-3 mx-auto text-center rounded-2xl flex flex-col justify-between
+       border ${theme.border} bg-gradient-to-b ${theme.bg} backdrop-blur-sm shadow-lg
+    `}>
+       <div className="flex flex-col items-center">
+         <div className={`${theme.text} text-3xl leading-none mb-1`}>★</div>
+         <h3 className={`${theme.text} font-extrabold text-lg leading-tight`}>
+           {card.name.toUpperCase()}
+         </h3>
+       </div>
+
+       <div className="flex-grow flex items-center justify-center py-2">
+          <IconComponent className={`w-8 h-8 ${theme.iconColor}`} />
+       </div>
+
+       <p className="text-gray-300 text-xs leading-tight line-clamp-3">
+           {card.description}
+       </p>
+    </Card>
+  );
+}
+
 // --- INTERFAZ DE PROPS ---
 interface MatchOfTheDayProps {
   profile: Profile | null;
@@ -231,6 +303,7 @@ interface MatchOfTheDayProps {
   leagueId: string | null; 
   gameDay: GameDay | null;
   activeCardMultiplier?: number; // ⚠️ NUEVA PROP: Valor del multiplicador (x2, x3, etc.)
+  opponentStrategyCard?: any;
 }
 
 // --- COMPONENTE PRINCIPAL ---
@@ -245,6 +318,7 @@ export function MatchOfTheDay({
   leagueId,
   gameDay,
   activeCardMultiplier = 1, // Valor por defecto es 1 (sin efecto)
+  opponentStrategyCard
 }: MatchOfTheDayProps) {
 
   // 1. ESTADOS PARA LA CARTA
@@ -390,10 +464,13 @@ export function MatchOfTheDay({
 
 {/* IZQUIERDA (MI PERFIL) */}
       <div className="flex flex-col gap-4">
-        <ProfilePlaceholder 
-          title={`MI PERFIL (${profile?.username || 'Cargando...'})`} 
-          avatarUrl={profile?.avatar_url} // <--- PASAMOS TU AVATAR
-        />
+        {/* ✅ AGREGAMOS ESTE DIV h-52 PARA FIJAR LA ALTURA */}
+        <div className="h-52"> 
+            <ProfilePlaceholder 
+              title={`MI PERFIL (${profile?.username || 'Cargando...'})`} 
+              avatarUrl={profile?.avatar_url}
+            />
+        </div>
         
         <Card>
           <CardHeader>
@@ -571,21 +648,46 @@ export function MatchOfTheDay({
       </div>
 
 {/* DERECHA (PERFIL RIVAL) */}
-      <div className="flex flex-col gap-4">
-        <ProfilePlaceholder 
-          title={`PERFIL RIVAL (${opponentProfile?.username || 'Rival...'})`} 
-          avatarUrl={opponentProfile?.avatar_url} // <--- PASAMOS AVATAR RIVAL
-        />
-        <Card>
-          <CardHeader><CardTitle className="font-headline text-lg text-center">CARTA RIVAL</CardTitle></CardHeader>
-          <CardContent className="text-center text-muted-foreground"><p>(Aquí irá la carta rival)</p></CardContent>
-        </Card>
-        <Card className="flex-grow min-h-[150px]">
-          <CardHeader><CardTitle className="font-headline text-lg text-center">CHAT DEL DUELO</CardTitle></CardHeader>
-          <CardContent className="text-center text-muted-foreground"><p>Próximamente...</p></CardContent>
-        </Card>
+<div className="flex flex-col gap-4">
+  
+  {/* Perfil rival */}
+  <div className="h-52">
+      <ProfilePlaceholder 
+        title={`PERFIL RIVAL (${opponentProfile?.username || 'Rival...'})`} 
+        avatarUrl={opponentProfile?.avatar_url}
+      />
+  </div>
+
+  {/* Carta rival */}
+  <Card className="flex-grow flex flex-col">
+    <CardHeader>
+      <CardTitle className="font-headline text-lg text-center">
+        CARTA RIVAL
+      </CardTitle>
+    </CardHeader>
+
+    <CardContent className="p-4 flex flex-col flex-grow justify-between">
+      <div className="flex items-center justify-center h-[250px]">
+        <RivalCardDisplay card={opponentStrategyCard} />
       </div>
-      
+    </CardContent>
+  </Card>
+
+  {/* Chat del duelo */}
+  <Card className="flex-grow min-h-[150px]">
+    <CardHeader>
+      <CardTitle className="font-headline text-lg text-center">
+        CHAT DEL DUELO
+      </CardTitle>
+    </CardHeader>
+
+    <CardContent className="p-4">
+      <DuelChat />   {/* <<--- AQUÍ VA EL CHAT VISUAL */}
+    </CardContent>
+  </Card>
+</div>
+
+    
     </div>
   );
 }

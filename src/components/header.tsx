@@ -58,6 +58,14 @@ export async function Header() {
               <Button asChild variant="ghost" className="font-medium text-base text-muted-foreground hover:text-primary hover:bg-primary/10 transition">
                 <Link href="/tienda">Tienda</Link>
               </Button>
+              <Button 
+                asChild 
+                variant="ghost" 
+                // 👇 Agregamos 'relative z-20' al final de las clases
+                className="font-medium text-base text-muted-foreground hover:text-primary hover:bg-primary/10 transition relative z-20"
+              >
+                <Link href="/fixturemundial">Mundial 2026</Link>
+              </Button>
             </>
           )}
         </nav>
