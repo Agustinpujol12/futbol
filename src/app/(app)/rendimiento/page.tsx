@@ -1,10 +1,9 @@
-// src/app/(app)/rendimiento/page.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { type Player } from '../dashboard/types'; 
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
+import { type Player, type GameDay } from '../dashboard/types';
+import { Card, CardHeader, CardContent, CardDescription } from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -15,17 +14,38 @@ import {
 } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-
-// 1. IMPORTAMOS LOS COMPONENTES DE PAGINACIÓN
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { ArrowUpDown, Search, CalendarDays } from "lucide-react";
 import {
   Pagination,
   PaginationContent,
-  PaginationEllipsis,
   PaginationItem,
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination"
+
+// Configuración de ordenamiento
+type SortConfig = {
+  key: 'name' | 'team' | 'position' | 'score';
+  direction: 'asc' | 'desc';
+};
+
+// Orden lógico de posiciones (no alfabético)
+const POSITION_ORDER: Record<string, number> = {
+  'Arquero': 1,
+  'Defensor': 2,
+  'Mediocampista': 3,
+  'Delantero': 4
+};
 
 const getInitials = (name: string) => {
   const parts = name.split(' ');
@@ -36,154 +56,276 @@ const getInitials = (name: string) => {
 };
 
 export default function RendimientoPage() {
+  // --- ESTADOS ---
   const [players, setPlayers] = useState<Player[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [availableGameDays, setAvailableGameDays] = useState<GameDay[]>([]);
+  
+  // Usamos el NÚMERO de fecha (1, 2, 3...) como valor del selector, no el ID
+  const [selectedMatchDayNum, setSelectedMatchDayNum] = useState<string>("1");
 
-  // 2. ESTADOS PARA LA PAGINACIÓN
+  const [loading, setLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'score', direction: 'desc' });
   const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 50; // Aquí defines cuántos ver por página (50 es ideal)
+  const ITEMS_PER_PAGE = 50;
 
+  const supabase = createClient();
+
+  // 1. CARGAR FECHAS DISPONIBLES AL INICIO
   useEffect(() => {
-    const fetchPlayers = async () => {
-      const supabase = createClient();
-      const GAME_DAY_ID = 'c77cd2ef-2c05-4e52-9c62-69496a39903b';
+    const fetchGameDays = async () => {
+      const { data } = await supabase
+        .from('game_days')
+        .select('*');
+      if (data) setAvailableGameDays(data);
+    };
+    fetchGameDays();
+  }, []);
 
-      const { data, error } = await supabase
-        .from('players')
-        .select('*, teams(name, logo_url), player_scores(score)')
-        .eq('player_scores.game_day_id', GAME_DAY_ID);
-        // Quitamos el order de supabase aquí para hacerlo en JS, que es más preciso para estructuras anidadas
+  // 2. BUSCAR JUGADORES CUANDO CAMBIA EL NÚMERO DE FECHA
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      setPlayers([]); // Limpiar tabla mientras carga
 
-      if (error) {
-        console.error("Error fetching player performance:", error);
-        setError("No se pudieron cargar los datos de rendimiento.");
-      } else {
-        // --- AQUÍ ESTÁ LA MAGIA DEL ORDENAMIENTO ---
-        // Convertimos data a tipo Player[] para manipularlo
-        const playersData = data as Player[];
+      // Buscar si existe un ID real para el número de fecha seleccionado
+      const gameDayObj = availableGameDays.find(
+        gd => gd.match_day_number === parseInt(selectedMatchDayNum)
+      );
 
-        // Ordenamos en el cliente: Mayor puntaje primero (Descendente)
-        const sortedPlayers = playersData.sort((a, b) => {
-          // Obtenemos el puntaje o 0 si no existe
-          const scoreA = a.player_scores?.[0]?.score ?? 0;
-          const scoreB = b.player_scores?.[0]?.score ?? 0;
-          
-          // Restamos B - A para orden descendente (Mayor a menor)
-          return scoreB - scoreA; 
-        });
+      // Si existe la fecha en DB, buscamos los jugadores
+      if (gameDayObj) {
+        const { data, error } = await supabase
+          .from('players')
+          .select('*, teams(name, logo_url), player_scores(score)')
+          .eq('player_scores.game_day_id', gameDayObj.id);
 
-        setPlayers(sortedPlayers);
-      }
+        if (!error && data) {
+          setPlayers(data as Player[]);
+        }
+      } 
+      // Si no existe (ej: Fecha 8 que aún no se jugó), players se queda vacío []
+
       setLoading(false);
     };
 
-    fetchPlayers();
-  }, []);
+    loadData();
+  }, [selectedMatchDayNum, availableGameDays]);
 
-  // 3. LÓGICA PARA CALCULAR QUÉ JUGADORES MOSTRAR
+  // 3. FILTRADO Y ORDENAMIENTO
+  const processedPlayers = useMemo(() => {
+    let filtered = [...players];
+
+    // Filtro
+    if (searchQuery) {
+      const lowerQuery = searchQuery.toLowerCase();
+      filtered = filtered.filter(p => 
+        p.name.toLowerCase().includes(lowerQuery) || 
+        p.teams?.name?.toLowerCase().includes(lowerQuery)
+      );
+    }
+
+    // Ordenamiento
+    filtered.sort((a, b) => {
+      let valA: any = '';
+      let valB: any = '';
+
+      switch (sortConfig.key) {
+        case 'name':
+          valA = a.name; valB = b.name; break;
+        case 'team':
+          valA = a.teams?.name || ''; valB = b.teams?.name || ''; break;
+        case 'position':
+          // Usamos el mapa de orden lógico. Si no está, va al final (99)
+          valA = POSITION_ORDER[a.position] || 99;
+          valB = POSITION_ORDER[b.position] || 99;
+          break;
+        case 'score':
+          valA = a.player_scores?.[0]?.score ?? 0;
+          valB = b.player_scores?.[0]?.score ?? 0;
+          break;
+      }
+
+      if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
+      if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    return filtered;
+  }, [players, searchQuery, sortConfig]);
+
+  // Reset de página al filtrar
+useEffect(() => { 
+    setCurrentPage(1); 
+  }, [searchQuery, selectedMatchDayNum, sortConfig]);
+
+  // Paginación
   const indexOfLastItem = currentPage * ITEMS_PER_PAGE;
   const indexOfFirstItem = indexOfLastItem - ITEMS_PER_PAGE;
-  const currentPlayers = players.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(players.length / ITEMS_PER_PAGE);
+  const currentPlayers = processedPlayers.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(processedPlayers.length / ITEMS_PER_PAGE);
 
-  // Función para cambiar de página
-  const handlePageChange = (pageNumber: number) => {
-     // Evitar ir a páginas que no existen
-    if(pageNumber < 1 || pageNumber > totalPages) return;
-    setCurrentPage(pageNumber);
-    // Opcional: Scrollear arriba al cambiar de página
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  const handleSort = (key: SortConfig['key']) => {
+    setSortConfig(current => ({
+      key,
+      direction: current.key === key && current.direction === 'desc' ? 'asc' : 'desc',
+    }));
   };
 
-  if (loading) {
-    return (
-      <div className="container mx-auto py-8 text-center">
-        <p className="text-muted-foreground">Cargando rendimiento de jugadores...</p>
-      </div>
-    );
-  }
-  
-  if (error) {
-    return (
-      <div className="container mx-auto py-8 text-center text-destructive">
-        <p>{error}</p>
-      </div>
-    );
-  }
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
 
   return (
     <div className="container mx-auto py-8 space-y-6">
-      <Card>
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <div>
-                <CardTitle className="font-headline text-3xl">
-                    Rendimiento de Jugadores (Fecha 1)
-                </CardTitle>
-                <CardDescription>
-                    Mostrando {indexOfFirstItem + 1} - {Math.min(indexOfLastItem, players.length)} de {players.length} jugadores.
-                </CardDescription>
+      
+      {/* HEADER */}
+      <div className="flex flex-col md:flex-row gap-4 justify-between items-end md:items-center">
+        <div>
+           <h1 className="text-3xl font-bold font-headline">Rendimiento</h1>
+           <p className="text-muted-foreground text-sm">Estadísticas por fecha.</p>
+        </div>
+
+        <div className="flex gap-3 w-full md:w-auto">
+            {/* SELECTOR DE FECHAS (1 al 8) */}
+            <Select value={selectedMatchDayNum} onValueChange={setSelectedMatchDayNum}>
+                <SelectTrigger className="w-[180px]">
+                    <CalendarDays className="w-4 h-4 mr-2 opacity-50"/>
+                    <SelectValue placeholder="Selecciona Fecha" />
+                </SelectTrigger>
+                <SelectContent>
+                    {/* Generamos array del 1 al 8 estático */}
+                    {Array.from({ length: 8 }, (_, i) => i + 1).map((num) => (
+                        <SelectItem key={num} value={num.toString()}>
+                            Fecha {num}
+                        </SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+
+            {/* BUSCADOR */}
+            <div className="relative w-full md:w-[250px]">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                    placeholder="Buscar jugador..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-8"
+                />
             </div>
-          </div>
+        </div>
+      </div>
+
+      <Card>
+        <CardHeader className="pb-2">
+            <CardDescription>
+                {loading 
+                  ? "Cargando..." 
+                  : processedPlayers.length > 0 
+                    ? `Mostrando ${indexOfFirstItem + 1}-${Math.min(indexOfLastItem, processedPlayers.length)} de ${processedPlayers.length} jugadores.`
+                    : "No hay datos para esta fecha."
+                }
+            </CardDescription>
         </CardHeader>
         <CardContent>
+          <div className="rounded-md border">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[300px]">Jugador</TableHead>
-                <TableHead>Equipo</TableHead>
-                <TableHead>Pos.</TableHead>
-                <TableHead className="text-right">Puntaje</TableHead>
+                {/* JUGADOR */}
+                <TableHead className="w-[300px]">
+                  <Button variant="ghost" onClick={() => handleSort('name')} className="flex items-center gap-1 font-bold pl-0 hover:bg-transparent">
+                    Jugador <ArrowUpDown className="h-3 w-3" />
+                  </Button>
+                </TableHead>
+                
+                {/* EQUIPO */}
+                <TableHead className="w-[200px]">
+                   <Button variant="ghost" onClick={() => handleSort('team')} className="flex items-center gap-1 font-bold pl-0 hover:bg-transparent">
+                    Equipo <ArrowUpDown className="h-3 w-3" />
+                  </Button>
+                </TableHead>
+                
+                {/* POSICIÓN (Con ancho fijo para evitar saltos) */}
+                <TableHead className="w-[150px]">
+                   <Button variant="ghost" onClick={() => handleSort('position')} className="flex items-center gap-1 font-bold pl-0 hover:bg-transparent">
+                    Pos. <ArrowUpDown className="h-3 w-3" />
+                  </Button>
+                </TableHead>
+                
+                {/* PUNTAJE */}
+                <TableHead className="text-right w-[100px]">
+                   <Button variant="ghost" onClick={() => handleSort('score')} className="ml-auto flex items-center gap-1 font-bold pr-0 hover:bg-transparent">
+                    Pts <ArrowUpDown className="h-3 w-3" />
+                  </Button>
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {/* 4. USAMOS currentPlayers EN LUGAR DE players */}
-              {currentPlayers.map((player) => {
+              {loading ? (
+                 <TableRow>
+                    <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
+                        Cargando datos de la Fecha {selectedMatchDayNum}...
+                    </TableCell>
+                 </TableRow>
+              ) : currentPlayers.length === 0 ? (
+                <TableRow>
+                    <TableCell colSpan={4} className="h-32 text-center text-muted-foreground flex flex-col items-center justify-center gap-2">
+                        <p className="text-lg font-semibold">Sin datos</p>
+                        <p className="text-sm opacity-60">Aún no hay registros para la Fecha {selectedMatchDayNum}.</p>
+                    </TableCell>
+                 </TableRow>
+              ) : (
+                currentPlayers.map((player) => {
                 const score = player.player_scores?.[0]?.score ?? 0;
                 const scoreColor = score > 8 ? 'text-green-500' : score > 6 ? 'text-yellow-500' : 'text-red-500';
 
                 return (
-                  <TableRow key={player.id}>
+                  <TableRow key={player.id} className="hover:bg-muted/50">
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-3">
-                        <Avatar className="h-10 w-10 border">
-                          <AvatarImage src={player.photo_url || undefined} alt={player.name} />
+                        <Avatar className="h-10 w-10 border bg-muted">
+                          <AvatarImage src={player.photo_url || undefined} alt={player.name} className="object-cover" />
                           <AvatarFallback>{getInitials(player.name)}</AvatarFallback>
                         </Avatar>
-                        <span className="font-semibold">{player.name}</span>
+                        <span className="font-semibold text-sm sm:text-base">{player.name}</span>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 text-muted-foreground">
                         <img 
                           src={player.teams?.logo_url || '/assets/team-placeholder.png'} 
                           alt={player.teams?.name || 'Equipo'}
-                          className="w-6 h-6 object-contain" 
+                          className="w-5 h-5 object-contain" 
                         />
-                        <span>{player.teams?.name || 'Sin Equipo'}</span>
+                        <span className="hidden sm:inline text-sm">{player.teams?.name || '-'}</span>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline">{player.position}</Badge>
+                      <Badge variant="secondary" className="text-xs font-normal w-24 justify-center">
+                        {player.position}
+                      </Badge>
                     </TableCell>
                     <TableCell className={`text-right font-bold text-lg ${scoreColor}`}>
                       {score.toFixed(1)}
                     </TableCell>
                   </TableRow>
                 );
-              })}
+              })
+            )}
             </TableBody>
           </Table>
+          </div>
         </CardContent>
       </Card>
 
-      {/* 5. COMPONENTE VISUAL DE PAGINACIÓN */}
-      {totalPages > 1 && (
+      {/* PAGINACIÓN */}
+      {!loading && totalPages > 1 && (
         <Pagination>
             <PaginationContent>
-            
-            {/* Botón Anterior */}
             <PaginationItem>
                 <PaginationPrevious 
                 href="#" 
@@ -191,41 +333,9 @@ export default function RendimientoPage() {
                 className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''} 
                 />
             </PaginationItem>
-
-            {/* Lógica simple de números: Muestra página actual y vecinas */}
-            {/* Si quieres algo más complejo con '...' avísame, esta es la versión limpia */}
-            
-            {Array.from({ length: totalPages }, (_, i) => i + 1)
-                .filter(page => {
-                    // Muestra primera, última, actual y vecinas
-                    return page === 1 || page === totalPages || Math.abs(page - currentPage) <= 1;
-                })
-                .map((page, index, array) => {
-                    // Lógica para poner '...' si hay salto
-                    const prevPage = array[index - 1];
-                    const showEllipsis = prevPage && page - prevPage > 1;
-
-                    return (
-                        <div key={page} className="flex items-center">
-                            {showEllipsis && (
-                                <PaginationItem>
-                                    <PaginationEllipsis />
-                                </PaginationItem>
-                            )}
-                            <PaginationItem>
-                                <PaginationLink 
-                                    href="#" 
-                                    isActive={page === currentPage}
-                                    onClick={(e) => { e.preventDefault(); handlePageChange(page); }}
-                                >
-                                    {page}
-                                </PaginationLink>
-                            </PaginationItem>
-                        </div>
-                    );
-                })}
-
-            {/* Botón Siguiente */}
+            <span className="text-sm text-muted-foreground px-4">
+                Página {currentPage} de {totalPages}
+            </span>
             <PaginationItem>
                 <PaginationNext 
                 href="#" 
@@ -233,7 +343,6 @@ export default function RendimientoPage() {
                 className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''} 
                 />
             </PaginationItem>
-            
             </PaginationContent>
         </Pagination>
       )}
