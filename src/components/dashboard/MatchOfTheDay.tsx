@@ -512,46 +512,84 @@ export function MatchOfTheDay({
       <div className="xl:col-span-3 flex flex-col items-center">
         <Card className="h-full min-h-[750px] overflow-hidden relative w-full">
           
-          {/* HEADER */}
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between w-full px-2 sm:px-6">
-              <div className="flex flex-col items-center w-24">
-                <span className="text-3xl font-bold text-primary">
+{/* HEADER REEMPLAZADO: WIN/LOSE + FECHA DINÁMICA */}
+          <CardHeader className="pb-6 pt-8">
+            <div className="flex items-start justify-between w-full px-4 sm:px-12">
+              
+              {/* --- 🟢 MI LADO (IZQUIERDA) --- */}
+              <div className="flex flex-col items-center min-w-[120px]">
+                {/* Mi Puntaje */}
+                <span className={`
+                    text-6xl font-black tracking-tighter drop-shadow-lg mb-2
+                    ${isDraw ? 'text-slate-200' : (iWin ? 'text-emerald-500' : 'text-red-500')}
+                `}>
                   {myTotalScore > 0 ? myTotalScore.toFixed(1) : '0.0'}
                 </span>
+                
+                {/* Badge WIN / LOSE */}
                 {showResult ? (
-                  <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold mt-1 text-white ${isDraw ? 'bg-gray-500' : (iWin ? 'bg-green-600' : 'bg-red-600')}`}>
-                    {isDraw ? 'EMPATE' : (iWin ? 'WIN' : 'LOSE')}
+                  <span className={`
+                      px-4 py-1 rounded-md text-sm font-black uppercase tracking-widest border-2 shadow-[0_0_10px_rgba(0,0,0,0.5)]
+                      ${isDraw 
+                        ? 'bg-slate-800 border-slate-600 text-slate-400' 
+                        : (iWin 
+                            ? 'bg-emerald-950/50 border-emerald-500 text-emerald-500' 
+                            : 'bg-red-950/50 border-red-600 text-red-600')
+                      }
+                  `}>
+                    {isDraw ? 'DRAW' : (iWin ? 'WIN' : 'LOSE')}
                   </span>
                 ) : (
-                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Total</span>
+                  <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest mt-2">Yo</span>
                 )}
               </div>
 
-              <div className="flex flex-col items-center mx-4">
-                <CardTitle className="font-headline text-center text-xl">
-                  Duelo 1v1 - Fecha {matchup.match_day_number}
-                </CardTitle>
-                <CardDescription className="text-center">
-                  {profile?.username || '...'} vs. {opponentProfile?.username || 'Rival...'}
-                </CardDescription>
-                {showResult && (
-                   <span className="text-[10px] text-muted-foreground mt-1 font-medium border px-2 rounded-full">RESULTADO PARCIAL</span>
-                )}
+              {/* --- ⚪ CENTRO (FECHA Y VS) --- */}
+              <div className="flex flex-col items-center justify-center pt-2 gap-1">
+                <span className="text-3xl font-black text-slate-600 italic opacity-50">VS</span>
+                
+                {/* FECHA DINÁMICA */}
+                <div className="px-3 py-1 bg-slate-800/80 rounded border border-slate-700 mt-2">
+                    <span className="text-xs font-bold text-slate-300 uppercase tracking-[0.2em]">
+                        FECHA {matchup ? matchup.match_day_number : '1'}
+                    </span>
+                </div>
+
+                {/* Live Indicator */}
+                <div className="flex items-center gap-1.5 mt-1">
+                    <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_#22c55e]"></div>
+                    <span className="text-[9px] font-bold text-green-500/80 uppercase tracking-wider">En Vivo</span>
+                </div>
               </div>
 
-              <div className="flex flex-col items-center w-24">
-                <span className="text-3xl font-bold text-destructive">
+              {/* --- 🔴 RIVAL (DERECHA) --- */}
+              <div className="flex flex-col items-center min-w-[120px]">
+                {/* Puntaje Rival */}
+                <span className={`
+                    text-6xl font-black tracking-tighter drop-shadow-lg mb-2
+                    ${isDraw ? 'text-slate-200' : (!iWin ? 'text-emerald-500' : 'text-red-500')}
+                `}>
                    {rivalTotalScore > 0 ? rivalTotalScore.toFixed(1) : '0.0'}
                 </span>
+
+                {/* Badge Rival (Lógica Inversa) */}
                 {showResult ? (
-                  <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold mt-1 text-white ${isDraw ? 'bg-gray-500' : (!iWin ? 'bg-green-600' : 'bg-red-600')}`}>
-                    {isDraw ? 'EMPATE' : (!iWin ? 'WIN' : 'LOSE')}
+                  <span className={`
+                      px-4 py-1 rounded-md text-sm font-black uppercase tracking-widest border-2 shadow-[0_0_10px_rgba(0,0,0,0.5)]
+                      ${isDraw 
+                        ? 'bg-slate-800 border-slate-600 text-slate-400' 
+                        : (!iWin 
+                            ? 'bg-emerald-950/50 border-emerald-500 text-emerald-500' 
+                            : 'bg-red-950/50 border-red-600 text-red-600')
+                      }
+                  `}>
+                    {isDraw ? 'DRAW' : (!iWin ? 'WIN' : 'LOSE')}
                   </span>
                 ) : (
-                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Rival</span>
+                  <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest mt-2">Rival</span>
                 )}
               </div>
+
             </div>
           </CardHeader>
 
@@ -648,44 +686,50 @@ export function MatchOfTheDay({
       </div>
 
 {/* DERECHA (PERFIL RIVAL) */}
-<div className="flex flex-col gap-4">
-  
-  {/* Perfil rival */}
-  <div className="h-52">
-      <ProfilePlaceholder 
-        title={`PERFIL RIVAL (${opponentProfile?.username || 'Rival...'})`} 
-        avatarUrl={opponentProfile?.avatar_url}
-      />
-  </div>
+      <div className="flex flex-col gap-4 h-full"> 
+        
+        {/* 1. Perfil rival (Mismo tamaño que tu perfil) */}
+        <div className="h-52 shrink-0">
+            <ProfilePlaceholder 
+              title={`PERFIL RIVAL (${opponentProfile?.username || 'Rival...'})`} 
+              avatarUrl={opponentProfile?.avatar_url}
+            />
+        </div>
 
-  {/* Carta rival */}
-  <Card className="flex-grow flex flex-col">
-    <CardHeader>
-      <CardTitle className="font-headline text-lg text-center">
-        CARTA RIVAL
-      </CardTitle>
-    </CardHeader>
+        {/* 2. Carta rival (CORREGIDA PARA SER IDÉNTICA A LA TUYA) */}
+        <Card className="shrink-0"> 
+          <CardHeader>
+            <CardTitle className="font-headline text-lg text-center">
+              CARTA RIVAL
+            </CardTitle>
+          </CardHeader>
 
-    <CardContent className="p-4 flex flex-col flex-grow justify-between">
-      <div className="flex items-center justify-center h-[250px]">
-        <RivalCardDisplay card={opponentStrategyCard} />
+          <CardContent className="p-4 flex flex-col items-center justify-center">
+            {/* ⚠️ AQUÍ ESTÁ LA SOLUCIÓN:
+                Usamos exactamente las mismas clases que usa tu 'StrategyCardManager' en modo small:
+                w-48 (192px) y h-64 (256px).
+            */}
+            <div className="w-48 h-64"> 
+              <RivalCardDisplay card={opponentStrategyCard} />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* 3. Chat del duelo (Este ocupa el resto del espacio) */}
+        <Card className="flex-grow flex flex-col min-h-[150px] overflow-hidden">
+          <CardHeader className="py-3 border-b border-border/50 bg-muted/20">
+            <CardTitle className="font-headline text-sm text-center uppercase tracking-wider text-muted-foreground">
+              Chat del Duelo
+            </CardTitle>
+          </CardHeader>
+
+          <CardContent className="p-0 flex-grow relative bg-black/20">
+             <div className="absolute inset-0 p-4 overflow-y-auto">
+                <DuelChat />
+             </div>
+          </CardContent>
+        </Card>
       </div>
-    </CardContent>
-  </Card>
-
-  {/* Chat del duelo */}
-  <Card className="flex-grow min-h-[150px]">
-    <CardHeader>
-      <CardTitle className="font-headline text-lg text-center">
-        CHAT DEL DUELO
-      </CardTitle>
-    </CardHeader>
-
-    <CardContent className="p-4">
-      <DuelChat />   {/* <<--- AQUÍ VA EL CHAT VISUAL */}
-    </CardContent>
-  </Card>
-</div>
 
     
     </div>
