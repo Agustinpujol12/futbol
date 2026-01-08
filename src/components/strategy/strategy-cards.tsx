@@ -12,7 +12,7 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import { Loader2, Zap, Star, TrendingDown } from "lucide-react"; // Añadido TrendingDown
+import { Loader2, Zap, Star, TrendingDown, HelpCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import { type GameDay, type Profile } from "@/app/(app)/dashboard/types";
 
@@ -113,7 +113,7 @@ function CardFront({ card, size = 'large' }: { card: StrategyCard, size?: 'small
 }
 
 /* -------------------------------------------------------------------------- */
-/* CARD BACK (GENÉRICA)                                                       */
+/* CARD BACK (DISEÑO MISTERIOSO CON "?")                                      */
 /* -------------------------------------------------------------------------- */
 function CardBack({ onClick, size = 'large' }: { onClick?: () => void, size?: 'small' | 'large' }) {
   
@@ -121,6 +121,7 @@ function CardBack({ onClick, size = 'large' }: { onClick?: () => void, size?: 's
     ? "rounded-3xl" 
     : "rounded-2xl p-3";
 
+  // Ajuste de tamaños para el icono
   const iconSize = size === 'large' ? "w-20 h-20" : "w-10 h-10";
   const titleSize = size === 'large' ? "text-2xl mt-6" : "text-sm mt-2";
   
@@ -130,23 +131,28 @@ function CardBack({ onClick, size = 'large' }: { onClick?: () => void, size?: 's
       className={`
         absolute inset-0 w-full h-full ${cardClasses} cursor-pointer select-none
         shadow-2xl overflow-hidden
-        border-[3px] border-yellow-500
-        bg-gradient-to-br from-[#2a2a2a] via-[#1e1e1e] to-[#0f0f0f]
+        border-[3px] border-slate-600 border-dashed
+        bg-slate-900
         flex flex-col items-center justify-center
+        group hover:bg-slate-800 transition-colors
       `}
       style={{ backfaceVisibility: "hidden" }}
     >
-      <div className="absolute inset-0 bg-yellow-400/10 blur-xl" />
-      <div className="relative z-10 border-[3px] border-yellow-500 rounded-full p-4 shadow-inner shadow-black/40 bg-black/40">
-        <Star className={`${iconSize} text-yellow-300 opacity-70 drop-shadow`} />
+      {/* Fondo sutil */}
+      <div className="absolute inset-0 bg-slate-800/50 opacity-0 group-hover:opacity-100 transition-opacity" />
+      
+      {/* Círculo central con ? */}
+      <div className="relative z-10 border-[3px] border-slate-500 rounded-full p-4 shadow-inner shadow-black/40 bg-slate-800 group-hover:scale-110 transition-transform duration-300">
+        <HelpCircle className={`${iconSize} text-slate-400 group-hover:text-white transition-colors`} />
       </div>
-      <p className={`relative z-10 font-bold text-yellow-300 drop-shadow uppercase tracking-wide ${titleSize}`}>
-        Carta Oculta
+      
+      <p className={`relative z-10 font-bold text-slate-300 drop-shadow uppercase tracking-widest ${titleSize} group-hover:text-white`}>
+        ¿SUERTE?
       </p>
-      <p className="relative z-10 text-gray-300 mt-1 text-xs text-center">
-        Haz clic para revelar
+      
+      <p className="relative z-10 text-slate-500 mt-2 text-xs text-center uppercase tracking-widest group-hover:text-slate-400">
+        Toca para revelar
       </p>
-      <div className="absolute bottom-0 w-full h-24 bg-gradient-to-t from-yellow-400/20 to-transparent" />
     </Card>
   );
 }

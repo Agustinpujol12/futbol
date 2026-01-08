@@ -79,6 +79,7 @@ export default function DashboardPage() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [standings, setStandings] = useState<any[]>([]); 
   const [leagueFixture, setLeagueFixture] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState("alineacion");
 
   const supabase = createClient();
 
@@ -312,7 +313,7 @@ export default function DashboardPage() {
       }
     };
     fetchLeagueData();
-  }, [selectedLeague, userId, supabase]);
+}, [selectedLeague, userId, supabase, activeTab]);
 
   // --- RENDERIZADO ---
   return (
@@ -391,7 +392,11 @@ export default function DashboardPage() {
                 ) : errorMsg ? (
                   <p className="text-center text-destructive py-6">{errorMsg}</p>
                 ) : (
-                  <Tabs defaultValue="alineacion" className="w-full">
+<Tabs 
+  value={activeTab} 
+  onValueChange={setActiveTab} 
+  className="w-full"
+>
                     
                     <TabsList className="flex justify-center mb-10 bg-muted/40 p-3 rounded-xl gap-3">
                       {[
