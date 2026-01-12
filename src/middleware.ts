@@ -1,23 +1,19 @@
 // src/middleware.ts
 import { type NextRequest } from 'next/server'
-import { updateSession } from '@/lib/supabase/middleware' // <-- CAMBIO IMPORTANTE
+import { updateSession } from '@/lib/supabase/middleware'
 
 export async function middleware(request: NextRequest) {
+  // Aquí es donde updateSession podría estar redirigiendo si detecta usuario.
+  // Pero primero, asegurémonos que el matcher lo permita.
   return await updateSession(request)
 }
 
 export const config = {
   matcher: [
     /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - / (la landing page pública)
-     * - /login (la página de login)
-     * - /auth/callback (el callback)
-     * Feel free to modify this pattern to include more paths.
+     * Excluir reset-password para que no sea interceptado por reglas de redirección automática
      */
-    '/((?!_next/static|_next/image|favicon.ico|login|auth/callback|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    // ⚠️ AGREGA |reset-password|login/forgot-password AQUÍ ⚠️
+    '/((?!_next/static|_next/image|favicon.ico|login|auth/callback|reset-password|login/forgot-password|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }

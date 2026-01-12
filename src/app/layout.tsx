@@ -1,8 +1,10 @@
-import type {Metadata} from 'next';
+import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
+// 1. IMPORTAMOS EL DIALOG AQUÍ
+import { UsernameDialog } from '@/components/username-dialog';
 
 export const metadata: Metadata = {
   title: 'Global GoalGetters',
@@ -23,6 +25,12 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=PT+Sans:wght@400;700&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased min-h-screen flex flex-col">
+        
+        {/* 2. AGREGAMOS EL COMPONENTE DE ID AQUÍ 
+            Se ejecutará en toda la app. Si falta el ID, bloqueará la pantalla.
+        */}
+        <UsernameDialog />
+
         <Header />
         <main className="flex-grow">{children}</main>
         <Footer />
