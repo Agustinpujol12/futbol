@@ -1,6 +1,8 @@
 // src/app/(app)/leagues/page.tsx
 import { createClient } from '@/lib/supabase/server'
 import LeagueJoinCard from './LeagueJoinCard'
+// 👇 1. IMPORTAMOS EL LISTENER
+import PaymentListener from './PaymentListener' 
 
 export const dynamic = 'force-dynamic'
 
@@ -22,6 +24,9 @@ export default async function LeaguesPage() {
 
   return (
     <div className="container mx-auto">
+      {/* 👇 2. LO COLOCAMOS AQUÍ ARRIBA (Es invisible pero vigila la URL) */}
+      <PaymentListener />
+
       <div className="mb-8 text-center mt-8">
         <h1 className="text-4xl font-bold tracking-tight font-headline">
           Elige tu Liga

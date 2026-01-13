@@ -21,9 +21,12 @@ import {
   AlertDialogTitle
 } from "@/components/ui/alert-dialog"
 import { useToast } from "@/hooks/use-toast"
-import { Trophy, Users, Coins } from 'lucide-react'
-import { joinLeagueAction } from './actions'
+import { Trophy, Users, Coins, CreditCard, Loader2 } from 'lucide-react'
 import { motion } from 'framer-motion'
+
+// 👇 IMPORTANTE: Importamos la acción de Mercado Pago que creamos antes
+// Asegúrate de haber creado el archivo src/app/actions/mercadopago.ts
+import { createLeaguePreference } from '@/app/actions/mercadopago'
 
 type League = {
   id: string
@@ -40,17 +43,28 @@ export default function LeagueJoinCard({ league }: { league: League }) {
 
   const handleJoin = async () => {
     startTransition(async () => {
-      const result = await joinLeagueAction(league.id)
-      if (result?.error) {
+      try {
+        // 1. Llamamos a la Server Action para generar el link de pago
+        // Le pasamos el ID, Nombre y el Precio de la liga
+        const paymentUrl = await createLeaguePreference(
+          league.id, 
+          league.name, 
+          league.entry_fee
+        )
+
+        if (paymentUrl) {
+          // 2. Si MP nos devuelve el link, redirigimos al usuario allá
+          window.location.href = paymentUrl
+        } else {
+          throw new Error("No se pudo generar el link de pago.")
+        }
+
+      } catch (error: any) {
+        // 3. Manejo de errores (ej: usuario no logueado o error de MP)
         toast({
-          title: "Error al unirse",
-          description: result.error,
+          title: "Error al iniciar pago",
+          description: error.message || "Hubo un problema con Mercado Pago.",
           variant: "destructive",
-        })
-      } else {
-        toast({
-          title: "¡Te has unido a la liga!",
-          description: `Bienvenido a la ${league.name}. ¡Mucha suerte!`,
         })
         setIsOpen(false)
       }
@@ -58,6 +72,7 @@ export default function LeagueJoinCard({ league }: { league: League }) {
   }
 
   const isFull = league.participant_count >= league.max_participants
+  const potentialPrize = league.entry_fee * league.max_participants
 
   return (
     <motion.div
@@ -83,7 +98,7 @@ export default function LeagueJoinCard({ league }: { league: League }) {
           </CardTitle>
         </CardHeader>
 
-        {/* PRICE */}
+        {/* PRECIO */}
         <div className="flex flex-col items-center mb-2">
           <div className="flex items-center gap-2 text-4xl font-extrabold text-primary tracking-tight">
             <Coins className="h-7 w-7 text-amber-500" />
@@ -94,7 +109,7 @@ export default function LeagueJoinCard({ league }: { league: League }) {
           </CardDescription>
         </div>
 
-        {/* CONTENT */}
+        {/* INFO */}
         <CardContent className="flex flex-col gap-3 items-center text-sm py-2">
           <div className="flex items-center gap-2">
             <Users className="h-5 w-5 text-primary" />
@@ -107,12 +122,12 @@ export default function LeagueJoinCard({ league }: { league: League }) {
           <div className="flex items-center gap-2 text-amber-500">
             <Coins className="h-5 w-5" />
             <span className="font-semibold">
-              Pozo total: ${league.entry_fee * league.max_participants}
+              Premios Garantizados: ${potentialPrize.toLocaleString('es-AR')}
             </span>
           </div>
         </CardContent>
 
-        {/* FOOTER */}
+        {/* FOOTER Y CONFIRMACIÓN */}
         <CardFooter className="w-full">
           <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
             <Button
@@ -127,17 +142,36 @@ export default function LeagueJoinCard({ league }: { league: League }) {
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle className="font-headline">
-                  Confirmar Entrada
+                  Confirmar Inscripción
                 </AlertDialogTitle>
                 <AlertDialogDescription>
-                  ¿Deseas unirte a <b>{league.name}</b> pagando ${league.entry_fee}?  
-                  Tu cupo será reservado inmediatamente.
+                  Estás a un paso de unirte a <b>{league.name}</b>.
+                  <br /><br />
+                  Serás redirigido a <b>Mercado Pago</b> para abonar la inscripción de <b>${league.entry_fee} ARS</b> de forma segura.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                <AlertDialogAction onClick={handleJoin} disabled={isPending}>
-                  {isPending ? "Uniéndote..." : "Confirmar y Pagar"}
+                <AlertDialogCancel disabled={isPending}>Cancelar</AlertDialogCancel>
+                {/* Botón de Acción Principal */}
+                <AlertDialogAction 
+                  onClick={(e) => {
+                    e.preventDefault(); // Prevenimos cierre automático para mostrar loading
+                    handleJoin();
+                  }} 
+                  disabled={isPending} 
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  {isPending ? (
+                     <>
+                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                       Redirigiendo...
+                     </>
+                  ) : (
+                     <>
+                       <CreditCard className="w-4 h-4 mr-2" />
+                       Pagar con Mercado Pago
+                     </>
+                  )}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
