@@ -4,11 +4,20 @@ import { MercadoPagoConfig, Preference } from 'mercadopago';
 import { createClient } from '@/lib/supabase/server';
 
 const client = new MercadoPagoConfig({ 
-  accessToken: process.env.MP_ACCESS_TOKEN! 
+  accessToken: process.env.MP_ACCESS_TOKEN!
 });
 
-export async function createLeaguePreference(leagueId: string, leagueName: string, price: number) {
-  console.log("🔥 NUEVO INTENTO DE PAGO - ID:", leagueId);
+export async function createLeaguePreference(
+  leagueId: string,
+  leagueName: string,
+  price: number
+) {
+  console.log("🔥 GENERANDO LINK PAGO - ID:", leagueId);
+
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:9002';
+
+  // ✅ ESTA ES LA FORMA CORRECTA
+  const isProduction = process.env.NODE_ENV === 'production';
 
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -22,34 +31,37 @@ export async function createLeaguePreference(leagueId: string, leagueName: strin
       body: {
         items: [
           {
-            id: String(leagueId),
+            id: leagueId,
             title: `Inscripción: ${leagueName}`,
             unit_price: Number(price),
             quantity: 1,
             currency_id: 'ARS',
           },
         ],
+
         back_urls: {
-          // Las URLs están bien, las dejamos así
-          success: `http://localhost:9002/leagues?payment=success&leagueId=${leagueId}`,
-          failure: `http://localhost:9002/leagues?payment=failure&leagueId=${leagueId}`,
-          pending: `http://localhost:9002/leagues?payment=pending&leagueId=${leagueId}`,
+          success: `${baseUrl}/leagues?payment=success&leagueId=${leagueId}`,
+          failure: `${baseUrl}/leagues?payment=failure&leagueId=${leagueId}`,
+          pending: `${baseUrl}/leagues?payment=pending&leagueId=${leagueId}`,
         },
-        // 👇 COMENTAMOS ESTA LÍNEA (Ponemos // al principio)
-        // auto_return: 'approved', 
-        
+
+        // ✅ SOLO EN PRODUCCIÓN REAL
+        ...(isProduction && {
+          auto_return: 'approved',
+        }),
+
         external_reference: JSON.stringify({
           userId: user.id,
-          leagueId: leagueId
+          leagueId,
         }),
       },
     });
 
-    console.log("✅ LINK GENERADO:", result.init_point);
+    console.log("✅ LINK CREADO:", result.init_point);
     return result.init_point;
 
   } catch (error: any) {
     console.error("❌ ERROR MP:", error);
-    throw new Error(`Error MP: ${error.message}`);
+    throw new Error(error.message);
   }
 }
