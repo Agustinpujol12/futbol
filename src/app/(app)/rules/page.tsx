@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { ShieldAlert, Zap } from 'lucide-react';
 
 export default function RulesPage() {
   return (
@@ -38,7 +39,7 @@ export default function RulesPage() {
 
         {/* SECCIÓN 2: SISTEMA DE PUNTUACIÓN (VISUAL) */}
         <section>
-          <h2 className="text-2xl font-bold mb-6 text-center">🎯 Sistema de Puntuación</h2>
+          <h2 className="text-2xl font-bold mb-6 text-center">🎯 Sistema de Puntuación Base</h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* ATAQUE */}
@@ -83,24 +84,69 @@ export default function RulesPage() {
               </ul>
             </div>
 
-            {/* SANCIONES */}
+            {/* SANCIONES (BASE) */}
             <div className="bg-gray-800 p-6 rounded-xl border-l-4 border-red-500 md:col-span-2">
-              <h3 className="text-xl font-bold mb-4 text-red-400">Sanciones</h3>
+              <h3 className="text-xl font-bold mb-4 text-red-400">Sanciones Reales</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                  <div className="flex justify-between md:block md:text-center">
-                    <span>Tarjeta Amarilla</span>
-                    <span className="font-bold text-white block">-1 pt</span>
+                   <span>Tarjeta Amarilla</span>
+                   <span className="font-bold text-white block">-1 pt</span>
                  </div>
                  <div className="flex justify-between md:block md:text-center">
-                    <span>Tarjeta Roja</span>
-                    <span className="font-bold text-white block">-3 pts</span>
+                   <span>Tarjeta Roja</span>
+                   <span className="font-bold text-white block">-3 pts</span>
                  </div>
                  <div className="flex justify-between md:block md:text-center">
-                    <span>Gol en Contra</span>
-                    <span className="font-bold text-white block">-2 pts</span>
+                   <span>Gol en Contra</span>
+                   <span className="font-bold text-white block">-2 pts</span>
                  </div>
               </div>
             </div>
+          </div>
+        </section>
+
+        {/* ✨ NUEVA SECCIÓN: CARTAS Y RIESGOS */}
+        <section className="bg-gray-900 border border-gray-700 rounded-2xl overflow-hidden">
+          <div className="bg-gray-800 p-4 border-b border-gray-700">
+             <h2 className="text-2xl font-bold flex items-center gap-2 text-yellow-400">
+               🃏 Cartas de Estrategia y Riesgos
+             </h2>
+          </div>
+          
+          <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+            
+            {/* Lado Positivo */}
+            <div>
+              <div className="flex items-center gap-2 mb-3 text-green-400">
+                <Zap className="w-5 h-5" />
+                <h3 className="text-lg font-bold">Multiplicadores</h3>
+              </div>
+              <p className="text-gray-400 text-sm leading-relaxed">
+                Al usar cartas como <strong>Capitán (x2)</strong> o <strong>Triple Capitán (x3)</strong>, todos los puntos que sume ese jugador se multiplicarán. Si tu jugador hace un gol de 4 pts y es Capitán, sumará <strong>8 pts</strong>.
+              </p>
+            </div>
+
+            {/* Lado Negativo (Lo que pediste) */}
+            <div>
+              <div className="flex items-center gap-2 mb-3 text-red-400">
+                <ShieldAlert className="w-5 h-5" />
+                <h3 className="text-lg font-bold">Penalización y Quita de Puntos</h3>
+              </div>
+              <div className="bg-red-950/30 p-3 rounded-lg border border-red-900/50">
+                <p className="text-gray-300 text-sm leading-relaxed">
+                  <strong>¡Cuidado!</strong> Los multiplicadores también afectan a los puntos negativos.
+                </p>
+                <ul className="mt-2 space-y-1 text-sm text-red-200 list-disc list-inside">
+                  <li>
+                    Si tu Capitán recibe una Roja (-3 pts), <strong>se te restarán 6 puntos</strong>.
+                  </li>
+                  <li>
+                    Existen cartas rivales de <strong>"Anulación"</strong> que pueden restar puntos directamente a tu total si tu jugador tiene mal rendimiento.
+                  </li>
+                </ul>
+              </div>
+            </div>
+
           </div>
         </section>
 
@@ -124,7 +170,7 @@ export default function RulesPage() {
         <div className="text-center pt-8">
           <Link 
             href="/leagues" 
-            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full transition-all transform hover:scale-105"
+            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full transition-all transform hover:scale-105 shadow-[0_0_20px_rgba(37,99,235,0.5)]"
           >
             ¡Entendido! Ir a Jugar
           </Link>

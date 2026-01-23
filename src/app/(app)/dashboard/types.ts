@@ -63,5 +63,7 @@ export type Profile = {
   id: string;
   username: string | null;
   avatar_url?: string | null; // <--- Añade esto si no lo tienes
+  plan_type: 'free' | 'plus' | 'premium';
+  reputation: 'clean' | 'warning' | 'danger' | 'banned'
   // ... (cualquier otro campo que tengas)
 };

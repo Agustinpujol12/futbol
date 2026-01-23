@@ -1,22 +1,20 @@
 // src/components/header.tsx
-// --- ARCHIVO ACTUALIZADO CON USERNAV ---
-
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/icons';
 import { createClient } from '@/lib/supabase/server';
-import { UserNav } from './user-nav'; // <-- Importamos el nuevo componente
+import { UserNav } from './user-nav'; 
 
 export async function Header() {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  // Buscar datos del perfil si hay usuario
   let userProfile = null;
   if (user) {
     const { data } = await supabase
       .from('profiles')
-      .select('username, avatar_url') // Asegúrate que estas columnas existen
+      // ✅ AGREGAMOS 'reputation' A LA CONSULTA
+      .select('username, avatar_url, plan_type, reputation') 
       .eq('id', user.id)
       .single();
     userProfile = data;
@@ -61,7 +59,6 @@ export async function Header() {
               <Button 
                 asChild 
                 variant="ghost" 
-                // 👇 Agregamos 'relative z-20' al final de las clases
                 className="font-medium text-base text-muted-foreground hover:text-primary hover:bg-primary/10 transition relative z-20"
               >
                 <Link href="/fixturemundial">Mundial 2026</Link>
@@ -73,11 +70,13 @@ export async function Header() {
         {/* --- DERECHA: USUARIO / AUTH --- */}
         <div className="flex justify-end items-center gap-4">
           {user ? (
-            // --- CAMBIO: Usamos UserNav en lugar de texto plano ---
             <UserNav 
               email={user.email} 
               username={userProfile?.username} 
-              avatarUrl={userProfile?.avatar_url} // Opcional
+              avatarUrl={userProfile?.avatar_url}
+              planType={userProfile?.plan_type} 
+              // ✅ PASAMOS LA REPUTACIÓN
+              reputation={userProfile?.reputation} 
             />
           ) : (
             <>

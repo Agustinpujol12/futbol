@@ -12,30 +12,82 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { CreditCard, LogOut, Settings, User } from 'lucide-react';
+import { CreditCard, Settings, User, Star } from 'lucide-react';
 import Link from 'next/link';
-import LogoutButton from './LogoutButton'; // Importamos tu botón de logout
+import LogoutButton from './LogoutButton';
 
 interface UserNavProps {
   email: string | undefined;
   username: string | null | undefined;
   avatarUrl?: string | null | undefined;
+  planType?: string | null;
+  reputation?: string | null; // ✅ Nueva prop
 }
 
-export function UserNav({ email, username, avatarUrl }: UserNavProps) {
-  // Obtener iniciales (ej. "Agustin Pujol" -> "AP", o "agustin" -> "A")
+export function UserNav({ email, username, avatarUrl, planType, reputation }: UserNavProps) {
   const initials = username
     ? username.substring(0, 2).toUpperCase()
     : email?.substring(0, 2).toUpperCase() || 'U';
 
   const displayName = username || email?.split('@')[0] || 'Usuario';
 
+  // Lógica para el borde que "engloba" la imagen
+  const getBorderClass = () => {
+    if (planType === 'premium') return 'border-2 border-yellow-400 shadow-[0_0_10px_rgba(234,179,8,0.4)]';
+    if (planType === 'plus') return 'border-2 border-slate-300 shadow-[0_0_5px_rgba(203,213,225,0.4)]';
+    return 'border border-border/50';
+  };
+
+  // Lógica para el anillo del botón
+  const getButtonClass = () => {
+    if (planType === 'premium' || planType === 'plus') return 'hover:opacity-80';
+    return 'ring-2 ring-primary/20 hover:ring-primary/50';
+  };
+
+  // Lógica del color de la tarjeta de reputación
+  const getReputationColor = () => {
+    switch (reputation) {
+      case 'warning': return 'bg-yellow-400 shadow-[0_0_8px_rgba(250,204,21,0.6)]';
+      case 'danger': return 'bg-red-600 shadow-[0_0_8px_rgba(220,38,38,0.6)]';
+      case 'banned': return 'bg-zinc-950 border border-zinc-700 shadow-[0_0_8px_rgba(0,0,0,0.8)]';
+      default: return 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]'; // 'clean' por defecto
+    }
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-10 w-10 rounded-full ring-2 ring-primary/20 hover:ring-primary/50 transition-all">
-          <Avatar className="h-10 w-10">
-            <AvatarImage src={avatarUrl || ''} alt={displayName} />
+        <Button 
+          variant="ghost" 
+          className={`relative h-10 w-10 rounded-full transition-all overflow-visible ${getButtonClass()}`}
+        >
+          
+          {/* 🟥 BADGE REPUTACIÓN (Tarjeta Sólida - IZQUIERDA) */}
+          {/* Posición: -top-3 -left-3 para equilibrar la estrella */}
+          <div className="absolute -top-2 -left-2 z-50 bg-zinc-950/80 rounded-full p-[3px] border border-white/10 backdrop-blur-sm">
+             <div className={`w-2 h-3 rounded-[1px] ${getReputationColor()}`}></div>
+          </div>
+
+          {/* ⭐ BADGE PREMIUM/PLUS (Estrella - DERECHA) */}
+          {planType === 'premium' && (
+            <div className="absolute -top-3 -right-3 z-50 bg-zinc-950 rounded-full p-[3px] border border-yellow-500/80 shadow-[0_0_8px_rgba(234,179,8,0.6)]">
+              <Star className="w-2.5 h-2.5 text-yellow-400 fill-yellow-400" />
+            </div>
+          )}
+
+          {planType === 'plus' && (
+            <div className="absolute -top-3 -right-3 z-50 bg-zinc-950 rounded-full p-[3px] border border-slate-400/80 shadow-[0_0_8px_rgba(148,163,184,0.6)]">
+              <Star className="w-2.5 h-2.5 text-slate-300 fill-slate-300" />
+            </div>
+          )}
+
+          {/* AVATAR */}
+          <Avatar className={`h-10 w-10 ${getBorderClass()}`}>
+            <AvatarImage 
+              src={avatarUrl || ''} 
+              alt={displayName} 
+              className="object-cover"
+            />
             <AvatarFallback className="bg-primary/10 text-primary font-bold">
               {initials}
             </AvatarFallback>
@@ -46,9 +98,13 @@ export function UserNav({ email, username, avatarUrl }: UserNavProps) {
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none font-headline truncate">
-              {displayName}
-            </p>
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-medium leading-none font-headline truncate">
+                {displayName}
+              </p>
+              {planType === 'premium' && <span className="text-[9px] bg-yellow-500/10 text-yellow-500 px-1.5 py-0.5 rounded border border-yellow-500/20 font-bold">PRO</span>}
+              {planType === 'plus' && <span className="text-[9px] bg-slate-500/10 text-slate-300 px-1.5 py-0.5 rounded border border-slate-500/20 font-bold">PLUS</span>}
+            </div>
             <p className="text-xs leading-none text-muted-foreground truncate">
               {email}
             </p>
@@ -65,7 +121,7 @@ export function UserNav({ email, username, avatarUrl }: UserNavProps) {
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
-            <Link href="/billing" className="cursor-pointer">
+            <Link href="/tienda" className="cursor-pointer">
               <CreditCard className="mr-2 h-4 w-4" />
               <span>Suscripción</span>
             </Link>
@@ -80,7 +136,6 @@ export function UserNav({ email, username, avatarUrl }: UserNavProps) {
         
         <DropdownMenuSeparator />
         
-        {/* Usamos tu componente LogoutButton pero adaptado visualmente */}
         <DropdownMenuItem asChild>
           <div className="w-full cursor-pointer text-red-500 focus:text-red-500">
              <LogoutButton isDropdownItem /> 

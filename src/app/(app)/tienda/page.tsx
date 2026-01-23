@@ -9,7 +9,8 @@ import {
   Zap, 
   ShieldCheck, 
   CreditCard,
-  Crown 
+  Crown,
+  Gem // Nuevo icono para el Plus
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -42,50 +43,102 @@ export default function ShopPage() {
         </div>
       </div>
 
-      {/* --- ITEM DESTACADO (SUSCRIPCIÓN) --- */}
-      <div className="relative">
-        <div className="absolute -inset-1 bg-gradient-to-r from-yellow-500 to-amber-600 rounded-2xl blur opacity-25"></div>
-        <Card className="relative border-yellow-500/50 bg-gradient-to-br from-zinc-900 via-zinc-950 to-black">
-            <CardHeader>
-                <div className="flex justify-between items-start">
-                    <div>
-                        <Badge className="bg-yellow-500 text-black font-bold mb-2 hover:bg-yellow-400">RECOMENDADO</Badge>
-                        <CardTitle className="text-3xl text-yellow-400 flex items-center gap-2">
-                            <Crown className="w-6 h-6 fill-yellow-400" />
-                            Membresía PRO
-                        </CardTitle>
-                        <CardDescription>Desbloquea todo el potencial de Global GoalGetters.</CardDescription>
-                    </div>
-                    <div className="text-right">
-                        <span className="text-4xl font-bold text-white">$5.00</span>
-                        <span className="text-muted-foreground text-sm">/mes</span>
-                    </div>
-                </div>
-            </CardHeader>
-            <CardContent className="grid md:grid-cols-3 gap-4">
-                <div className="flex items-center gap-3 p-3 bg-white/5 rounded-lg border border-white/10">
-                    <Star className="w-5 h-5 text-yellow-400" />
-                    <span className="text-sm">Acceso a torneos VIP</span>
-                </div>
-                <div className="flex items-center gap-3 p-3 bg-white/5 rounded-lg border border-white/10">
-                    <Zap className="w-5 h-5 text-yellow-400" />
-                    <span className="text-sm">Sin anuncios publicitarios</span>
-                </div>
-                <div className="flex items-center gap-3 p-3 bg-white/5 rounded-lg border border-white/10">
-                    <ShieldCheck className="w-5 h-5 text-yellow-400" />
-                    <span className="text-sm">Insignia dorada en perfil</span>
-                </div>
-            </CardContent>
-            <CardFooter>
-                <Button className="w-full bg-yellow-500 text-black hover:bg-yellow-400 font-bold text-lg h-12">
-                    OBTENER PRO AHORA
-                </Button>
-            </CardFooter>
-        </Card>
+      {/* --- SECCIÓN DE MEMBRESÍAS --- */}
+      <h2 className="text-2xl font-bold font-headline mt-4 mb-4 border-b border-white/10 pb-2">Planes de Suscripción</h2>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        {/* 🥈 PLAN PLUS (NUEVO) */}
+        <div className="relative">
+           <Card className="relative h-full flex flex-col border-slate-500/30 bg-gradient-to-br from-zinc-900 via-slate-950 to-black hover:border-slate-400/50 transition-all">
+              <CardHeader>
+                  <div className="flex justify-between items-start">
+                      <div>
+                          <Badge className="bg-slate-600 text-white font-bold mb-2">POPULAR</Badge>
+                          <CardTitle className="text-3xl text-slate-300 flex items-center gap-2">
+                              <Gem className="w-6 h-6 text-slate-300" />
+                              Membresía PLUS
+                          </CardTitle>
+                          <CardDescription>Para managers que quieren un extra.</CardDescription>
+                      </div>
+                      <div className="text-right">
+                          <span className="text-4xl font-bold text-white">$2.50</span>
+                          <span className="text-muted-foreground text-sm">/mes</span>
+                      </div>
+                  </div>
+              </CardHeader>
+              <CardContent className="space-y-4 flex-grow">
+                  <div className="flex items-center gap-3">
+                      <Star className="w-5 h-5 text-slate-400" />
+                      <span className="text-sm text-zinc-300">Estrella Plateada en perfil</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                      <Zap className="w-5 h-5 text-slate-400" />
+                      <span className="text-sm text-zinc-300">Sin anuncios básicos</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                      <ShieldCheck className="w-5 h-5 text-slate-400" />
+                      <span className="text-sm text-zinc-300">Soporte prioritario</span>
+                  </div>
+              </CardContent>
+              <CardFooter>
+                  <Button className="w-full bg-slate-700 text-white hover:bg-slate-600 font-bold text-lg h-12 border border-slate-500/50">
+                      MEJORAR A PLUS
+                  </Button>
+              </CardFooter>
+           </Card>
+        </div>
+
+        {/* 🥇 PLAN PREMIUM (ANTES PRO) */}
+        <div className="relative">
+           <div className="absolute -inset-1 bg-gradient-to-r from-yellow-500 to-amber-600 rounded-2xl blur opacity-20 animate-pulse"></div>
+           <Card className="relative h-full flex flex-col border-yellow-500/50 bg-gradient-to-br from-zinc-900 via-zinc-950 to-black">
+              <CardHeader>
+                  <div className="flex justify-between items-start">
+                      <div>
+                          <Badge className="bg-yellow-500 text-black font-bold mb-2 hover:bg-yellow-400">MEJOR OPCIÓN</Badge>
+                          <CardTitle className="text-3xl text-yellow-400 flex items-center gap-2">
+                              <Crown className="w-6 h-6 fill-yellow-400" />
+                              Membresía PREMIUM
+                          </CardTitle>
+                          <CardDescription>La experiencia definitiva de manager.</CardDescription>
+                      </div>
+                      <div className="text-right">
+                          <span className="text-4xl font-bold text-white">$5.00</span>
+                          <span className="text-muted-foreground text-sm">/mes</span>
+                      </div>
+                  </div>
+              </CardHeader>
+              <CardContent className="space-y-4 flex-grow">
+                  <div className="flex items-center gap-3">
+                      <Star className="w-5 h-5 text-yellow-400" />
+                      <span className="text-sm text-white font-medium">Estrella Dorada en perfil</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                      <Zap className="w-5 h-5 text-yellow-400" />
+                      <span className="text-sm text-white font-medium">Sin anuncios publicitarios</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                      <ShieldCheck className="w-5 h-5 text-yellow-400" />
+                      <span className="text-sm text-white font-medium">Acceso a torneos exclusivos VIP</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                      <MessageCircle className="w-5 h-5 text-yellow-400" />
+                      <span className="text-sm text-white font-medium">Chat global desbloqueado</span>
+                  </div>
+              </CardContent>
+              <CardFooter>
+                  <Button className="w-full bg-yellow-500 text-black hover:bg-yellow-400 font-bold text-lg h-12 shadow-[0_0_15px_rgba(234,179,8,0.4)]">
+                      OBTENER PREMIUM
+                  </Button>
+              </CardFooter>
+           </Card>
+        </div>
+
       </div>
 
-      {/* --- GRID DE PRODUCTOS --- */}
-      <h2 className="text-2xl font-bold font-headline mt-8 mb-4 border-b border-white/10 pb-2">Mejoras Disponibles</h2>
+      {/* --- GRID DE MEJORAS INDIVIDUALES --- */}
+      <h2 className="text-2xl font-bold font-headline mt-8 mb-4 border-b border-white/10 pb-2">Mejoras Individuales</h2>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         
@@ -133,7 +186,7 @@ export default function ShopPage() {
             </CardFooter>
         </Card>
 
-        {/* ITEM 3: ESTADÍSTICAS (Inventado) */}
+        {/* ITEM 3: ESTADÍSTICAS */}
         <Card className="flex flex-col hover:border-primary/50 transition-colors cursor-pointer group">
             <CardHeader>
                 <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center mb-2 group-hover:bg-emerald-500/20 transition-colors">
