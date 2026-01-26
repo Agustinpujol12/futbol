@@ -1,9 +1,9 @@
-// src/components/header.tsx
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/icons';
 import { createClient } from '@/lib/supabase/server';
 import { UserNav } from './user-nav'; 
+import Notifications from './notifications';
 
 export async function Header() {
   const supabase = createClient();
@@ -13,7 +13,6 @@ export async function Header() {
   if (user) {
     const { data } = await supabase
       .from('profiles')
-      // ✅ AGREGAMOS 'reputation' A LA CONSULTA
       .select('username, avatar_url, plan_type, reputation') 
       .eq('id', user.id)
       .single();
@@ -70,14 +69,19 @@ export async function Header() {
         {/* --- DERECHA: USUARIO / AUTH --- */}
         <div className="flex justify-end items-center gap-4">
           {user ? (
-            <UserNav 
-              email={user.email} 
-              username={userProfile?.username} 
-              avatarUrl={userProfile?.avatar_url}
-              planType={userProfile?.plan_type} 
-              // ✅ PASAMOS LA REPUTACIÓN
-              reputation={userProfile?.reputation} 
-            />
+            <>
+              {/* ✅ 2. INTEGRACIÓN DE NOTIFICACIONES */}
+              {/* Se coloca antes del UserNav para que quede a la izquierda de la foto */}
+              <Notifications />
+
+              <UserNav 
+                email={user.email} 
+                username={userProfile?.username} 
+                avatarUrl={userProfile?.avatar_url}
+                planType={userProfile?.plan_type} 
+                reputation={userProfile?.reputation} 
+              />
+            </>
           ) : (
             <>
               <Button asChild variant="ghost" className="text-base font-medium text-muted-foreground hover:text-primary hover:bg-primary/10 transition">

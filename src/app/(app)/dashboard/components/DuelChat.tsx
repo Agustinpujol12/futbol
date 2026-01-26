@@ -3,13 +3,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Send, MessageSquare, AlertCircle } from 'lucide-react';
+import { Send, MessageSquare, AlertCircle, Loader2 } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
 
-// --- CONFIGURACIÓN DE REGLAS ---
 const MAX_CHARS = 200;       
 const COOLDOWN_MS = 2000;    
 
-// --- FRASES RÁPIDAS ---
 const QUICK_MESSAGES = [
   { id: 1, text: "¡Buena suerte! 🍀" },
   { id: 2, text: "Hola buenas 👋" },
@@ -33,23 +32,99 @@ type Message = {
 interface DuelChatProps {
   userAvatar?: string | null;
   rivalAvatar?: string | null;
+  matchupId: string;
+  currentUserId: string;
 }
 
-export default function DuelChat({ userAvatar, rivalAvatar }: DuelChatProps) {
+export default function DuelChat({ 
+  userAvatar, 
+  rivalAvatar, 
+  matchupId, 
+  currentUserId 
+}: DuelChatProps) {
+  
+  const supabase = createClient();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   
   const lastMessageTimeRef = useRef<number>(0);
   const lastMessageTextRef = useRef<string>('');
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // --- 1. CARGAR HISTORIAL ---
+  useEffect(() => {
+    if (!matchupId) return;
+
+    const fetchMessages = async () => {
+      setIsLoading(true);
+      const { data, error } = await supabase
+        .from('match_messages')
+        .select('*')
+        .eq('matchup_id', matchupId)
+        .order('created_at', { ascending: true });
+
+      if (!error && data) {
+        const formattedMessages: Message[] = data.map((msg: any) => ({
+          id: msg.id,
+          sender: msg.sender_id === currentUserId ? 'me' : 'rival',
+          text: msg.content,
+          timestamp: new Date(msg.created_at),
+        }));
+        setMessages(formattedMessages);
+      }
+      setIsLoading(false);
+    };
+
+    fetchMessages();
+
+    // 📡 SUSCRIPCIÓN REALTIME
+    const channel = supabase
+      .channel(`chat_room_${matchupId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'match_messages',
+          filter: `matchup_id=eq.${matchupId}`,
+        },
+        (payload) => {
+          const newMsg = payload.new;
+          
+          // 🛑 TRUCO PARA EVITAR DUPLICADOS:
+          // Si el mensaje lo envié YO (sender_id === currentUserId), lo ignoro aquí
+          // porque ya lo agregué localmente en handleSendMessage.
+          if (newMsg.sender_id === currentUserId) {
+            return;
+          }
+
+          const formattedMsg: Message = {
+            id: newMsg.id,
+            sender: 'rival', // Si entra por aquí y no soy yo, seguro es el rival
+            text: newMsg.content,
+            timestamp: new Date(newMsg.created_at),
+          };
+          
+          setMessages((prev) => [...prev, formattedMsg]);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [matchupId, currentUserId]);
+
+  // Scroll automático
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
 
+  // Limpiar errores
   useEffect(() => {
     if (errorMsg) {
       const timer = setTimeout(() => setErrorMsg(null), 3000);
@@ -57,7 +132,8 @@ export default function DuelChat({ userAvatar, rivalAvatar }: DuelChatProps) {
     }
   }, [errorMsg]);
 
-  const handleSendMessage = (text: string) => {
+  // --- 2. ENVIAR MENSAJE (OPTIMISTA) ---
+  const handleSendMessage = async (text: string) => {
     const cleanText = text.trim();
     const now = Date.now();
 
@@ -78,19 +154,36 @@ export default function DuelChat({ userAvatar, rivalAvatar }: DuelChatProps) {
       return;
     }
 
+    // Actualizar referencias
     lastMessageTimeRef.current = now;
     lastMessageTextRef.current = cleanText;
-
-    const newMessage: Message = {
-      id: now.toString(),
-      sender: 'me',
-      text: cleanText,
-      timestamp: new Date(),
+    
+    // ⚡ 1. ACTUALIZACIÓN OPTIMISTA (Mostrar YA en pantalla)
+    const optimisticMsg: Message = {
+        id: Math.random().toString(), // ID temporal
+        sender: 'me',
+        text: cleanText,
+        timestamp: new Date()
     };
+    
+    setMessages((prev) => [...prev, optimisticMsg]);
+    setInputValue(''); // Limpiar input inmediatamente
 
-    setMessages((prev) => [...prev, newMessage]);
-    setInputValue('');
-    setErrorMsg(null);
+    // 🚀 2. ENVIAR A SUPABASE (En segundo plano)
+    const { error } = await supabase
+      .from('match_messages')
+      .insert({
+        matchup_id: matchupId,
+        sender_id: currentUserId,
+        content: cleanText
+      });
+
+    if (error) {
+      console.error('Error enviando mensaje:', error);
+      setErrorMsg("Error al enviar. Verifica tu conexión.");
+      // Si falla, podrías eliminar el mensaje optimista aquí, 
+      // pero por simplicidad solo mostramos el error.
+    }
   };
 
   return (
@@ -108,64 +201,64 @@ export default function DuelChat({ userAvatar, rivalAvatar }: DuelChatProps) {
           hover:[&::-webkit-scrollbar-thumb]:bg-primary/40
         "
       >
-        {messages.length === 0 && (
+        {isLoading ? (
+            <div className="h-full flex flex-col items-center justify-center text-muted-foreground opacity-50">
+                <Loader2 className="w-6 h-6 animate-spin mb-2" />
+                <p className="text-xs">Conectando...</p>
+            </div>
+        ) : messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-muted-foreground opacity-30">
             <MessageSquare className="w-8 h-8 mb-2" />
             <p className="text-xs">El chat está vacío. ¡Saluda!</p>
           </div>
-        )}
+        ) : (
+           messages.map((msg) => {
+            const isMe = msg.sender === 'me';
+            return (
+              <div key={msg.id} className={`flex w-full items-end gap-2 ${isMe ? 'justify-start' : 'justify-end'}`}>
+                
+                {/* AVATAR USUARIO (IZQUIERDA) */}
+                {isMe && (
+                  <div className="shrink-0 w-6 h-6 rounded-full overflow-hidden border border-primary/50 shadow-sm mb-1">
+                    {userAvatar ? (
+                      <img src={userAvatar} alt="Me" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-primary/20 flex items-center justify-center text-[8px] font-bold">YO</div>
+                    )}
+                  </div>
+                )}
 
-        {messages.map((msg) => {
-          const isMe = msg.sender === 'me';
-          return (
-            <div key={msg.id} className={`flex w-full items-end gap-2 ${isMe ? 'justify-start' : 'justify-end'}`}>
-              
-              {/* AVATAR USUARIO */}
-              {isMe && (
-                <div className="shrink-0 w-6 h-6 rounded-full overflow-hidden border border-primary/50 shadow-sm mb-1">
-                  {userAvatar ? (
-                    <img src={userAvatar} alt="Me" className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full bg-primary/20 flex items-center justify-center text-[8px] font-bold">YO</div>
-                  )}
+                {/* BURBUJA DE MENSAJE */}
+                <div
+                  className={`
+                    w-fit max-w-[75%] px-3 py-1.5 rounded-xl text-sm shadow-sm relative break-words leading-tight
+                    ${isMe 
+                      ? 'bg-primary text-primary-foreground rounded-bl-none' 
+                      : 'bg-zinc-700 text-white rounded-br-none'
+                    }
+                  `}
+                >
+                  <p>{msg.text}</p>
+                  <span className="text-[9px] opacity-60 mt-0.5 block text-right leading-none">
+                    {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </span>
                 </div>
-              )}
 
-              {/* BURBUJA DE MENSAJE (COMPACTA) */}
-              {/* Cambios clave para hacerla chica:
-                  1. px-3 py-1.5 (Menos relleno)
-                  2. text-sm leading-tight (Texto normal pero líneas pegadas)
-                  3. w-fit (Se ajusta al contenido exacto)
-              */}
-              <div
-                className={`
-                  w-fit max-w-[75%] px-3 py-1.5 rounded-xl text-sm shadow-sm relative break-words leading-tight
-                  ${isMe 
-                    ? 'bg-primary text-primary-foreground rounded-bl-none' 
-                    : 'bg-zinc-700 text-white rounded-br-none'
-                  }
-                `}
-              >
-                <p>{msg.text}</p>
-                <span className="text-[9px] opacity-60 mt-0.5 block text-right leading-none">
-                  {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </span>
+                {/* AVATAR RIVAL (DERECHA) */}
+                {!isMe && (
+                  <div className="shrink-0 w-6 h-6 rounded-full overflow-hidden border border-zinc-500 shadow-sm mb-1">
+                    {rivalAvatar ? (
+                      <img src={rivalAvatar} alt="Rival" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-zinc-600 flex items-center justify-center text-[8px] font-bold">VS</div>
+                    )}
+                  </div>
+                )}
+
               </div>
-
-              {/* AVATAR RIVAL */}
-              {!isMe && (
-                <div className="shrink-0 w-6 h-6 rounded-full overflow-hidden border border-zinc-500 shadow-sm mb-1">
-                  {rivalAvatar ? (
-                    <img src={rivalAvatar} alt="Rival" className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full bg-zinc-600 flex items-center justify-center text-[8px] font-bold">VS</div>
-                  )}
-                </div>
-              )}
-
-            </div>
-          );
-        })}
+            );
+          })
+        )}
       </div>
 
       {/* ÁREA DE INPUT Y CONTROLES */}
@@ -196,7 +289,8 @@ export default function DuelChat({ userAvatar, rivalAvatar }: DuelChatProps) {
                   setInputValue(e.target.value);
                 }
               }}
-              placeholder="Escribe..."
+              placeholder={matchupId ? "Escribe..." : "Chat deshabilitado"}
+              disabled={!matchupId || isLoading}
               className="w-full bg-background/50 border-white/10 h-8 text-xs focus-visible:ring-primary/50 pr-10"
             />
             <span className={`absolute right-3 top-1/2 -translate-y-1/2 text-[9px] font-mono ${inputValue.length >= MAX_CHARS ? 'text-destructive' : 'text-muted-foreground/50'}`}>
@@ -207,7 +301,7 @@ export default function DuelChat({ userAvatar, rivalAvatar }: DuelChatProps) {
           <Button 
             type="submit" 
             size="icon" 
-            disabled={!inputValue.trim()} 
+            disabled={!inputValue.trim() || !matchupId || isLoading} 
             className="h-8 w-8 bg-primary shadow-lg hover:bg-primary/90 disabled:opacity-50"
           >
             <Send className="w-3 h-3" />
@@ -220,7 +314,8 @@ export default function DuelChat({ userAvatar, rivalAvatar }: DuelChatProps) {
                key={msg.id}
                type="button" 
                onClick={() => handleSendMessage(msg.text)}
-               className="text-center px-1 py-1 rounded bg-secondary/30 hover:bg-primary/20 hover:text-primary border border-transparent hover:border-primary/30 transition-all text-[10px] font-medium truncate active:scale-95 cursor-pointer select-none"
+               disabled={!matchupId || isLoading}
+               className="text-center px-1 py-1 rounded bg-secondary/30 hover:bg-primary/20 hover:text-primary border border-transparent hover:border-primary/30 transition-all text-[10px] font-medium truncate active:scale-95 cursor-pointer select-none disabled:opacity-30 disabled:cursor-not-allowed"
                title={msg.text}
              >
                {msg.text}

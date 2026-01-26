@@ -44,8 +44,7 @@ export async function saveLineupAction(payload: SaveLineupPayload) {
 }
 
 
-// --- 2. NUEVA LÓGICA: CALCULAR POSICIONES DE LA LIGA ---
-// Esta función se llamará cuando quieras procesar una fecha terminada.
+// --- 2. LÓGICA EXISTENTE: CALCULAR POSICIONES DE LA LIGA ---
 
 export async function calculateLeagueStandings(leagueId: string, gameDayId: string) {
   const supabase = createClient();
@@ -102,73 +101,7 @@ export async function calculateLeagueStandings(leagueId: string, gameDayId: stri
   return { success: true };
 }
 
-// --- FUNCIONES AUXILIARES (Privadas para este archivo) ---
-
-// Calcula la suma de puntajes de los titulares de un usuario
-async function calculateTeamScore(supabase: any, userId: string, gameDayId: string) {
-    // 1. Buscar la alineación guardada
-    const { data: lineup } = await supabase
-        .from('daily_lineups')
-        .select('final_selection_ids')
-        .eq('user_id', userId)
-        .eq('game_day_id', gameDayId)
-        .single();
-
-    if (!lineup || !lineup.final_selection_ids || lineup.final_selection_ids.length === 0) {
-        return 0; // Si no hizo alineación, tiene 0 puntos
-    }
-
-    // 2. Sumar los puntajes de esos jugadores desde la tabla player_scores
-    // Asumimos que player_scores tiene registros vinculados a los IDs de los jugadores
-    const { data: scores } = await supabase
-        .from('player_scores')
-        .select('score')
-        .in('player_id', lineup.final_selection_ids);
-    
-    if (!scores) return 0;
-
-    // Suma simple de los scores encontrados
-    return scores.reduce((acc: number, curr: any) => acc + (curr.score || 0), 0);
-}
-
-// Actualiza la fila en league_members sumando lo nuevo a lo que ya tenía
-async function updateMemberStats(supabase: any, leagueId: string, userId: string, stats: any) {
-    // 1. Obtener datos actuales
-    const { data: current } = await supabase
-        .from('league_members')
-        .select('*')
-        .eq('league_id', leagueId)
-        .eq('user_id', userId)
-        .single();
-
-    if (!current) return; // Si no existe el miembro, salimos (o podrías crearlo)
-
-    // 2. Calcular nuevos acumulados
-    const newPj = (current.pj || 0) + 1;
-    const newPts = (current.pts || 0) + stats.pts;
-    const newV = (current.v || 0) + stats.v;
-    const newE = (current.e || 0) + stats.e;
-    const newD = (current.d || 0) + stats.d; 
-    const newPf = (current.pf || 0) + stats.pf;
-    const newPc = (current.pc || 0) + stats.pc;
-    const newDf = newPf - newPc; // Diferencia de puntos total
-
-    // 3. Guardar en DB
-    await supabase
-        .from('league_members')
-        .update({
-            pj: newPj,
-            pts: newPts,
-            v: newV,
-            e: newE,
-            d: newD,
-            pf: newPf,
-            pc: newPc,
-            df: newDf // Columna 'df' según tu imagen del types.ts o DB
-        })
-        .eq('league_id', leagueId)
-        .eq('user_id', userId);
-}
+// --- 3. LÓGICA EXISTENTE: GUARDAR JUGADOR POTENCIADO (ESTRATEGIA) ---
 
 export async function saveBoostedPlayerAction(
   lineupId: string, 
@@ -188,4 +121,131 @@ export async function saveBoostedPlayerAction(
 
   revalidatePath('/dashboard');
   return { success: true };
+}
+
+// --- 4. NUEVA LÓGICA: REPORTAR PARTIDO (DISCORD + DB) ---
+
+export async function reportMatchAction(matchupId: string, reason: string) {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) return { success: false, message: 'No autenticado' };
+
+  // A. Marcar el partido en Supabase para proteger la evidencia (has_report = true)
+  const { error } = await supabase
+    .from('league_matchups')
+    .update({ has_report: true })
+    .eq('id', matchupId);
+
+  if (error) {
+    console.error('Error marcando reporte:', error);
+    return { success: false, message: 'Error al guardar el reporte en DB.' };
+  }
+
+  // B. Enviar notificación al Webhook de Discord
+  await sendDiscordAlert(matchupId, user.id, user.email || 'Sin email', reason);
+
+  return { success: true, message: 'Reporte enviado.' };
+}
+
+
+// --- FUNCIONES AUXILIARES (Privadas) ---
+
+// Auxiliar: Calcula la suma de puntajes de los titulares
+async function calculateTeamScore(supabase: any, userId: string, gameDayId: string) {
+    // 1. Buscar la alineación guardada
+    const { data: lineup } = await supabase
+        .from('daily_lineups')
+        .select('final_selection_ids')
+        .eq('user_id', userId)
+        .eq('game_day_id', gameDayId)
+        .single();
+
+    if (!lineup || !lineup.final_selection_ids || lineup.final_selection_ids.length === 0) {
+        return 0; // Si no hizo alineación, tiene 0 puntos
+    }
+
+    // 2. Sumar los puntajes de esos jugadores
+    const { data: scores } = await supabase
+        .from('player_scores')
+        .select('score')
+        .in('player_id', lineup.final_selection_ids);
+    
+    if (!scores) return 0;
+
+    return scores.reduce((acc: number, curr: any) => acc + (curr.score || 0), 0);
+}
+
+// Auxiliar: Actualiza estadísticas de miembro
+async function updateMemberStats(supabase: any, leagueId: string, userId: string, stats: any) {
+    const { data: current } = await supabase
+        .from('league_members')
+        .select('*')
+        .eq('league_id', leagueId)
+        .eq('user_id', userId)
+        .single();
+
+    if (!current) return;
+
+    const newPj = (current.pj || 0) + 1;
+    const newPts = (current.pts || 0) + stats.pts;
+    const newV = (current.v || 0) + stats.v;
+    const newE = (current.e || 0) + stats.e;
+    const newD = (current.d || 0) + stats.d; 
+    const newPf = (current.pf || 0) + stats.pf;
+    const newPc = (current.pc || 0) + stats.pc;
+    const newDf = newPf - newPc;
+
+    await supabase
+        .from('league_members')
+        .update({
+            pj: newPj,
+            pts: newPts,
+            v: newV,
+            e: newE,
+            d: newD,
+            pf: newPf,
+            pc: newPc,
+            df: newDf
+        })
+        .eq('league_id', leagueId)
+        .eq('user_id', userId);
+}
+
+// Auxiliar: Envía alerta a Discord
+async function sendDiscordAlert(matchupId: string, userId: string, userEmail: string, reason: string) {
+  const webhookUrl = process.env.DISCORD_REPORT_WEBHOOK_URL;
+  
+  if (!webhookUrl) {
+    console.warn("No se ha configurado DISCORD_REPORT_WEBHOOK_URL en .env");
+    return;
+  }
+
+  const embed = {
+    title: "🚨 REPORTE DE CONDUCTA",
+    description: "Un usuario ha reportado un chat abusivo o comportamiento antideportivo.",
+    color: 15548997, // Rojo
+    fields: [
+      { name: "Motivo", value: reason, inline: false },
+      { name: "Reportado por", value: `${userEmail}`, inline: true },
+      { name: "User ID", value: `\`${userId}\``, inline: true },
+      { name: "Match ID", value: `\`${matchupId}\``, inline: false },
+      { name: "Acción Automática", value: "✅ El chat ha sido preservado en la base de datos (no será borrado).", inline: false }
+    ],
+    timestamp: new Date().toISOString(),
+    footer: { text: "Global GoalGetters Admin System" }
+  };
+
+  try {
+    await fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        username: "Árbitro Bot",
+        embeds: [embed],
+      }),
+    });
+  } catch (err) {
+    console.error('Error enviando a Discord:', err);
+  }
 }

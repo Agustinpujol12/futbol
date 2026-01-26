@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { FootballPitch } from './FootballPitch';
 
 import { StrategyCardManager } from '@/components/strategy/strategy-cards';
+import { reportMatchAction } from '@/app/(app)/dashboard/actions';
 import { saveBoostedPlayerAction } from '@/app/(app)/dashboard/actions';
 import {
   type Player,
@@ -606,12 +607,28 @@ export function MatchOfTheDay({
     }
   };
 
-  // Handler para el reporte (Conectado al Modal)
-  const handleReportSubmit = (reason: string) => {
-    console.log("Reportando chat por:", reason);
+// Handler para el reporte (CONECTADO A BASE DE DATOS Y DISCORD)
+  const handleReportSubmit = async (reason: string) => {
+    // 1. Cerramos el modal inmediatamente para que la UI se sienta rápida
     setIsReportOpen(false);
-    // Aquí conectarías con tu backend real en el futuro
-    alert("¡Reporte enviado! Gracias por ayudarnos a mantener el juego limpio.");
+    
+    if (!matchup?.id) return;
+
+    // 2. Llamamos a la acción del servidor
+    try {
+      const result = await reportMatchAction(matchup.id, reason);
+
+      if (result.success) {
+        // Feedback positivo
+        alert("✅ Reporte enviado. El historial del chat ha sido guardado para revisión.");
+      } else {
+        // Feedback negativo
+        alert("❌ Hubo un error al enviar el reporte. Intenta nuevamente.");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("❌ Error de conexión al enviar el reporte.");
+    }
   };
 
   if (!matchup) {
@@ -630,7 +647,7 @@ export function MatchOfTheDay({
       {/* AUREOLA MÁGICA */}
       <MagicCursor active={isApplyingCard} />
       
-      {/* MODAL DE REPORTE (Controlado por estado isReportOpen) */}
+      {/* MODAL DE REPORTE */}
       <ReportDialog 
         isOpen={isReportOpen} 
         onClose={() => setIsReportOpen(false)} 
@@ -643,13 +660,13 @@ export function MatchOfTheDay({
         {/* IZQUIERDA (MI PERFIL + MI CARTA) */}
         <div className="flex flex-col gap-4">
           <div className="h-52"> 
-<ProfilePlaceholder 
-  title={`${profile?.username || '...'}`} 
-  avatarUrl={profile?.avatar_url} 
-  planType={profile?.plan_type as 'free' | 'plus' | 'premium'}
-  // 👇 Conectamos tu reputación (asegúrate de agregar el campo a tu type Profile)
-  reputation={profile?.reputation as 'clean' | 'warning' | 'danger' | 'banned'} 
-/>
+            <ProfilePlaceholder 
+              title={`${profile?.username || '...'}`} 
+              avatarUrl={profile?.avatar_url} 
+              planType={profile?.plan_type as 'free' | 'plus' | 'premium'}
+              // 👇 Conectamos tu reputación
+              reputation={profile?.reputation as 'clean' | 'warning' | 'danger' | 'banned'} 
+            />
           </div>
           
           <Card>
@@ -883,10 +900,13 @@ export function MatchOfTheDay({
 
             <CardContent className="p-0 flex-grow relative bg-black/20">
                 <div className="absolute inset-0 p-0">
-                  <DuelChat 
-                    userAvatar={profile?.avatar_url} 
-                    rivalAvatar={opponentProfile?.avatar_url} 
-                  />
+<DuelChat 
+  userAvatar={profile?.avatar_url} 
+  rivalAvatar={opponentProfile?.avatar_url}
+  // 👇 AGREGAR ESTOS DOS DATOS:
+  matchupId={matchup?.id}         // El ID del partido actual
+  currentUserId={profile?.id || ''} // Tu ID para saber cuáles son tus mensajes
+/>
                 </div>
             </CardContent>
           </Card>
