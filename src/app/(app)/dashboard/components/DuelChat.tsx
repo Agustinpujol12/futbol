@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Send, MessageSquare, AlertCircle, Loader2 } from 'lucide-react';
+import { Send, MessageSquare, AlertCircle, Loader2, Lock } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
 const MAX_CHARS = 200;       
@@ -34,13 +34,15 @@ interface DuelChatProps {
   rivalAvatar?: string | null;
   matchupId: string;
   currentUserId: string;
+  userPlan: string; // ✅ NUEVO: Recibimos el plan
 }
 
 export default function DuelChat({ 
   userAvatar, 
   rivalAvatar, 
   matchupId, 
-  currentUserId 
+  currentUserId,
+  userPlan = 'free' // Valor por defecto
 }: DuelChatProps) {
   
   const supabase = createClient();
@@ -52,6 +54,10 @@ export default function DuelChat({
   const lastMessageTimeRef = useRef<number>(0);
   const lastMessageTextRef = useRef<string>('');
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // ✅ LÓGICA DE PERMISOS
+  const isPremium = userPlan === 'premium';
+  const canType = isPremium; // Solo Premium puede escribir libremente
 
   // --- 1. CARGAR HISTORIAL ---
   useEffect(() => {
@@ -93,16 +99,13 @@ export default function DuelChat({
         (payload) => {
           const newMsg = payload.new;
           
-          // 🛑 TRUCO PARA EVITAR DUPLICADOS:
-          // Si el mensaje lo envié YO (sender_id === currentUserId), lo ignoro aquí
-          // porque ya lo agregué localmente en handleSendMessage.
           if (newMsg.sender_id === currentUserId) {
             return;
           }
 
           const formattedMsg: Message = {
             id: newMsg.id,
-            sender: 'rival', // Si entra por aquí y no soy yo, seguro es el rival
+            sender: 'rival',
             text: newMsg.content,
             timestamp: new Date(newMsg.created_at),
           };
@@ -132,7 +135,7 @@ export default function DuelChat({
     }
   }, [errorMsg]);
 
-  // --- 2. ENVIAR MENSAJE (OPTIMISTA) ---
+  // --- 2. ENVIAR MENSAJE ---
   const handleSendMessage = async (text: string) => {
     const cleanText = text.trim();
     const now = Date.now();
@@ -158,18 +161,18 @@ export default function DuelChat({
     lastMessageTimeRef.current = now;
     lastMessageTextRef.current = cleanText;
     
-    // ⚡ 1. ACTUALIZACIÓN OPTIMISTA (Mostrar YA en pantalla)
+    // ⚡ 1. ACTUALIZACIÓN OPTIMISTA
     const optimisticMsg: Message = {
-        id: Math.random().toString(), // ID temporal
+        id: Math.random().toString(),
         sender: 'me',
         text: cleanText,
         timestamp: new Date()
     };
     
     setMessages((prev) => [...prev, optimisticMsg]);
-    setInputValue(''); // Limpiar input inmediatamente
+    setInputValue(''); 
 
-    // 🚀 2. ENVIAR A SUPABASE (En segundo plano)
+    // 🚀 2. ENVIAR A SUPABASE
     const { error } = await supabase
       .from('match_messages')
       .insert({
@@ -181,8 +184,6 @@ export default function DuelChat({
     if (error) {
       console.error('Error enviando mensaje:', error);
       setErrorMsg("Error al enviar. Verifica tu conexión.");
-      // Si falla, podrías eliminar el mensaje optimista aquí, 
-      // pero por simplicidad solo mostramos el error.
     }
   };
 
@@ -217,7 +218,7 @@ export default function DuelChat({
             return (
               <div key={msg.id} className={`flex w-full items-end gap-2 ${isMe ? 'justify-start' : 'justify-end'}`}>
                 
-                {/* AVATAR USUARIO (IZQUIERDA) */}
+                {/* AVATAR USUARIO */}
                 {isMe && (
                   <div className="shrink-0 w-6 h-6 rounded-full overflow-hidden border border-primary/50 shadow-sm mb-1">
                     {userAvatar ? (
@@ -244,7 +245,7 @@ export default function DuelChat({
                   </span>
                 </div>
 
-                {/* AVATAR RIVAL (DERECHA) */}
+                {/* AVATAR RIVAL */}
                 {!isMe && (
                   <div className="shrink-0 w-6 h-6 rounded-full overflow-hidden border border-zinc-500 shadow-sm mb-1">
                     {rivalAvatar ? (
@@ -277,11 +278,12 @@ export default function DuelChat({
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            handleSendMessage(inputValue);
+            // ✅ Solo permitir enviar si es premium (o si el input se pudo llenar de alguna forma)
+            if (canType) handleSendMessage(inputValue);
           }}
           className="flex gap-2 items-center"
         >
-          <div className="relative flex-1">
+          <div className="relative flex-1 group">
             <Input
               value={inputValue}
               onChange={(e) => {
@@ -289,25 +291,46 @@ export default function DuelChat({
                   setInputValue(e.target.value);
                 }
               }}
-              placeholder={matchupId ? "Escribe..." : "Chat deshabilitado"}
-              disabled={!matchupId || isLoading}
-              className="w-full bg-background/50 border-white/10 h-8 text-xs focus-visible:ring-primary/50 pr-10"
+              // ✅ LÓGICA DE BLOQUEO DE INPUT
+              disabled={!matchupId || isLoading || !canType}
+              placeholder={
+                !matchupId ? "Chat deshabilitado" : 
+                !canType ? "Solo usuarios Premium pueden escribir..." : // Mensaje para Free
+                "Escribe..."
+              }
+              className={`
+                w-full h-8 text-xs pr-10 border-white/10
+                ${!canType ? 'bg-zinc-900/50 text-muted-foreground cursor-not-allowed' : 'bg-background/50 focus-visible:ring-primary/50'}
+              `}
             />
-            <span className={`absolute right-3 top-1/2 -translate-y-1/2 text-[9px] font-mono ${inputValue.length >= MAX_CHARS ? 'text-destructive' : 'text-muted-foreground/50'}`}>
-              {inputValue.length}/{MAX_CHARS}
-            </span>
+            
+            {/* Ícono de candado si no puede escribir */}
+            {!canType && (
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/50">
+                <Lock className="w-3 h-3" />
+              </div>
+            )}
+
+            {/* Contador de caracteres (solo si puede escribir) */}
+            {canType && (
+              <span className={`absolute right-3 top-1/2 -translate-y-1/2 text-[9px] font-mono ${inputValue.length >= MAX_CHARS ? 'text-destructive' : 'text-muted-foreground/50'}`}>
+                {inputValue.length}/{MAX_CHARS}
+              </span>
+            )}
           </div>
 
           <Button 
             type="submit" 
             size="icon" 
-            disabled={!inputValue.trim() || !matchupId || isLoading} 
+            // ✅ Botón deshabilitado si no es premium
+            disabled={!inputValue.trim() || !matchupId || isLoading || !canType} 
             className="h-8 w-8 bg-primary shadow-lg hover:bg-primary/90 disabled:opacity-50"
           >
             <Send className="w-3 h-3" />
           </Button>
         </form>
 
+        {/* FRASES RÁPIDAS (Disponibles para TODOS) */}
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
            {QUICK_MESSAGES.map((msg) => (
              <button

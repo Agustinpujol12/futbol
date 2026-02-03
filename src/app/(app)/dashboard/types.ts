@@ -6,11 +6,10 @@ export type Team = {
   id: string;
   name: string;
   pot: number;
-  photo_url: string | null; // Logo del equipo (opcional)
+  photo_url: string | null;
   logo_url: string | null;
 };
 
-// --- ⬇️ AÑADE ESTE NUEVO TIPO ⬇️ ---
 // --- Tabla 'player_scores' ---
 export type PlayerScore = {
   score: number;
@@ -24,9 +23,9 @@ export type Player = {
   position: 'Arquero' | 'Defensor' | 'Mediocampista' | 'Delantero';
   status: 'Titular' | 'Suplente';
   team_id: string;
-  photo_url: string | null; // ✅ Agregada: imagen del jugador
-  teams: Team; // Relación: equipo del jugador
-  player_scores: PlayerScore[]; // <--- ¡LÍNEA AÑADIDA!
+  photo_url: string | null;
+  teams: Team;
+  player_scores: PlayerScore[];
 };
 
 // --- Tabla 'game_days' ---
@@ -59,11 +58,12 @@ export type DailyLineup = {
   boosted_player_id?: string | null;
 };
 
+// --- Tabla 'profiles' ---
 export type Profile = {
   id: string;
   username: string | null;
-  avatar_url?: string | null; // <--- Añade esto si no lo tienes
-  plan_type: 'free' | 'plus' | 'premium';
-  reputation: 'clean' | 'warning' | 'danger' | 'banned'
-  // ... (cualquier otro campo que tengas)
+  avatar_url?: string | null;
+  // ✅ MODIFICADO: Ya no existe 'plus', ahora es binario (Free o Premium)
+  plan_type: 'free' | 'premium';
+  reputation: 'clean' | 'warning' | 'danger' | 'banned';
 };

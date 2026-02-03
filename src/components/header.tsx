@@ -10,6 +10,7 @@ export async function Header() {
   const { data: { user } } = await supabase.auth.getUser();
 
   let userProfile = null;
+  
   if (user) {
     const { data } = await supabase
       .from('profiles')
@@ -22,6 +23,7 @@ export async function Header() {
   return (
     <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/60 shadow-md">
       <div className="container mx-auto px-6 sm:px-8 lg:px-12 h-24 grid grid-cols-3 items-center">
+        
         {/* --- IZQUIERDA: LOGO --- */}
         <div className="flex justify-start items-center">
           <Link
@@ -70,14 +72,15 @@ export async function Header() {
         <div className="flex justify-end items-center gap-4">
           {user ? (
             <>
-              {/* ✅ 2. INTEGRACIÓN DE NOTIFICACIONES */}
-              {/* Se coloca antes del UserNav para que quede a la izquierda de la foto */}
+              {/* NOTIFICACIONES */}
               <Notifications />
 
+              {/* MENÚ DE USUARIO (Aquí es donde se ve si es Premium o no) */}
               <UserNav 
                 email={user.email} 
                 username={userProfile?.username} 
                 avatarUrl={userProfile?.avatar_url}
+                // Pasamos el plan tal cual viene de la DB ('free' o 'premium')
                 planType={userProfile?.plan_type} 
                 reputation={userProfile?.reputation} 
               />

@@ -128,7 +128,7 @@ function FairPlayLegend() {
   return (
     <div className="w-full flex flex-wrap justify-center gap-4 sm:gap-8 py-4 px-4 bg-black/20 rounded-lg border border-white/5 mb-2">
       
-      {/* Tarjeta Verde (Sólida) */}
+      {/* Tarjeta Verde */}
       <div className="flex items-center gap-3 group cursor-help select-none">
         <div className="w-6 h-8 bg-green-500 rounded-[3px] shadow-[0_0_10px_rgba(34,197,94,0.5)] transform group-hover:-translate-y-1 transition-transform duration-200"></div>
         <div className="flex flex-col leading-tight">
@@ -137,7 +137,7 @@ function FairPlayLegend() {
         </div>
       </div>
 
-      {/* Tarjeta Amarilla (Sólida) */}
+      {/* Tarjeta Amarilla */}
       <div className="flex items-center gap-3 group cursor-help select-none">
         <div className="w-6 h-8 bg-yellow-400 rounded-[3px] shadow-[0_0_10px_rgba(250,204,21,0.5)] transform group-hover:-translate-y-1 transition-transform duration-200"></div>
         <div className="flex flex-col leading-tight">
@@ -146,7 +146,7 @@ function FairPlayLegend() {
         </div>
       </div>
 
-      {/* Tarjeta Roja (Sólida) */}
+      {/* Tarjeta Roja */}
       <div className="flex items-center gap-3 group cursor-help select-none">
         <div className="w-6 h-8 bg-red-600 rounded-[3px] shadow-[0_0_10px_rgba(220,38,38,0.5)] transform group-hover:-translate-y-1 transition-transform duration-200"></div>
         <div className="flex flex-col leading-tight">
@@ -155,7 +155,7 @@ function FairPlayLegend() {
         </div>
       </div>
 
-      {/* Tarjeta Negra (Sólida) */}
+      {/* Tarjeta Negra */}
       <div className="flex items-center gap-3 group cursor-help select-none">
         <div className="w-6 h-8 bg-zinc-950 border border-zinc-800 rounded-[3px] shadow-[0_0_10px_rgba(0,0,0,0.8)] transform group-hover:-translate-y-1 transition-transform duration-200"></div>
         <div className="flex flex-col leading-tight">
@@ -168,20 +168,20 @@ function FairPlayLegend() {
   );
 }
 
-// --- COMPONENTE: PLACEHOLDER PERFIL (ACTUALIZADO) ---
+// --- COMPONENTE: PLACEHOLDER PERFIL (LIMPIO: SOLO FREE O PREMIUM) ---
 function ProfilePlaceholder({ 
   title, 
   avatarUrl, 
   planType = 'free',
-  reputation = 'clean' // ✅ NUEVO: Recibe el estado de comportamiento
+  reputation = 'clean' 
 }: { 
   title: string; 
   avatarUrl?: string | null; 
-  planType?: 'free' | 'plus' | 'premium';
-  reputation?: 'clean' | 'warning' | 'danger' | 'banned'; // Tipado
+  planType?: 'free' | 'premium'; // 🗑️ Eliminado 'plus'
+  reputation?: 'clean' | 'warning' | 'danger' | 'banned';
 }) {
   
-  // Badge de Suscripción (Derecha - Estrella)
+  // Badge de Suscripción (Solo para Premium)
   const StatusBadge = () => {
     if (planType === 'premium') {
       return (
@@ -190,19 +190,11 @@ function ProfilePlaceholder({
         </div>
       );
     }
-    if (planType === 'plus') {
-      return (
-        <div className="absolute -top-1 -right-1 bg-black/50 rounded-full p-1 border border-slate-400/50 shadow-[0_0_10px_rgba(203,213,225,0.5)] z-20" title="Usuario Plus">
-          <Star className="w-4 h-4 text-slate-300 fill-slate-300" />
-        </div>
-      );
-    }
     return null;
   };
 
-  // ✅ NUEVO: Badge de Reputación (Izquierda - Tarjeta Sólida)
+  // Badge de Reputación
   const ReputationBadge = () => {
-    // Definimos colores según el estado
     let colorClass = "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]"; // Clean
     let titleText = "Juego Limpio";
 
@@ -222,9 +214,7 @@ function ProfilePlaceholder({
         className="absolute -top-1 -left-1 z-20 group cursor-help" 
         title={`Conducta: ${titleText}`}
       >
-        {/* Contenedor circular oscuro para resaltar la tarjeta */}
         <div className="bg-black/60 rounded-full p-1.5 border border-white/5 backdrop-blur-sm">
-           {/* La Tarjeta Sólida */}
            <div className={`w-3 h-4 rounded-[2px] ${colorClass}`}></div>
         </div>
       </div>
@@ -242,10 +232,7 @@ function ProfilePlaceholder({
       <CardContent className="text-center text-muted-foreground flex flex-col items-center">
         <div className="relative inline-block">
           
-          {/* ✅ AQUI SE RENDERIZA LA TARJETA */}
           <ReputationBadge />
-
-          {/* AQUI LA ESTRELLA */}
           <StatusBadge />
 
           {avatarUrl ? (
@@ -254,17 +241,17 @@ function ProfilePlaceholder({
               alt="Avatar" 
               className={`
                 w-24 h-24 rounded-full object-cover shadow-lg mb-2
-                ${planType === 'premium' ? 'border-4 border-yellow-500/70 shadow-yellow-500/20' : 
-                  planType === 'plus' ? 'border-4 border-slate-400/70 shadow-slate-400/20' : 
-                  'border-4 border-primary/30'}
+                ${planType === 'premium' 
+                    ? 'border-4 border-yellow-500/70 shadow-yellow-500/20'  // Estilo Premium
+                    : 'border-4 border-primary/30'}                         // Estilo Free
               `}
             />
           ) : (
             <div className={`
               w-24 h-24 rounded-full mx-auto mb-2 flex items-center justify-center border-4 
-              ${planType === 'premium' ? 'bg-yellow-500/10 border-yellow-500/50' : 
-                planType === 'plus' ? 'bg-slate-400/10 border-slate-400/50' : 
-                'bg-primary/10 border-primary/30'}
+              ${planType === 'premium' 
+                  ? 'bg-yellow-500/10 border-yellow-500/50' 
+                  : 'bg-primary/10 border-primary/30'}
             `}>
               <span className="text-3xl opacity-50 font-bold uppercase">
                 {title.charAt(0) || '?'}
@@ -273,13 +260,10 @@ function ProfilePlaceholder({
           )}
         </div>
 
-        {/* Etiqueta de Plan Texto (Opcional, ya la tenías) */}
-        {planType !== 'free' && (
-          <span className={`
-            text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full mt-1
-            ${planType === 'premium' ? 'bg-yellow-500/20 text-yellow-500 border border-yellow-500/20' : 'bg-slate-500/20 text-slate-300 border border-slate-500/20'}
-          `}>
-            {planType}
+        {/* Etiqueta de Plan Texto (Solo mostramos si es Premium, el Free se entiende por defecto) */}
+        {planType === 'premium' && (
+          <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full mt-1 bg-yellow-500/20 text-yellow-500 border border-yellow-500/20">
+            Premium
           </span>
         )}
 
@@ -607,22 +591,18 @@ export function MatchOfTheDay({
     }
   };
 
-// Handler para el reporte (CONECTADO A BASE DE DATOS Y DISCORD)
+  // Handler para el reporte (CONECTADO A BASE DE DATOS Y DISCORD)
   const handleReportSubmit = async (reason: string) => {
-    // 1. Cerramos el modal inmediatamente para que la UI se sienta rápida
     setIsReportOpen(false);
     
     if (!matchup?.id) return;
 
-    // 2. Llamamos a la acción del servidor
     try {
       const result = await reportMatchAction(matchup.id, reason);
 
       if (result.success) {
-        // Feedback positivo
         alert("✅ Reporte enviado. El historial del chat ha sido guardado para revisión.");
       } else {
-        // Feedback negativo
         alert("❌ Hubo un error al enviar el reporte. Intenta nuevamente.");
       }
     } catch (error) {
@@ -663,8 +643,7 @@ export function MatchOfTheDay({
             <ProfilePlaceholder 
               title={`${profile?.username || '...'}`} 
               avatarUrl={profile?.avatar_url} 
-              planType={profile?.plan_type as 'free' | 'plus' | 'premium'}
-              // 👇 Conectamos tu reputación
+              planType={profile?.plan_type as 'free' | 'premium'}
               reputation={profile?.reputation as 'clean' | 'warning' | 'danger' | 'banned'} 
             />
           </div>
@@ -759,7 +738,7 @@ export function MatchOfTheDay({
                       text-6xl font-black tracking-tighter drop-shadow-lg mb-2
                       ${isDraw ? 'text-slate-200' : (!iWin ? 'text-emerald-500' : 'text-red-500')}
                   `}>
-                     {rivalTotalScore > 0 ? rivalTotalScore.toFixed(1) : '0.0'}
+                      {rivalTotalScore > 0 ? rivalTotalScore.toFixed(1) : '0.0'}
                   </span>
                   {showResult ? (
                     <span className={`
@@ -875,7 +854,7 @@ export function MatchOfTheDay({
              <div className="h-[1px] bg-border flex-1"></div>
           </div>
 
-          {/* ✨ NUEVO: BARRA DE FAIR PLAY (SÓLIDA) */}
+          {/* BARRA DE FAIR PLAY (SÓLIDA) */}
           <FairPlayLegend />
 
           {/* BLOQUE 3: CHAT CON BOTÓN DE REPORTE */}
@@ -900,13 +879,13 @@ export function MatchOfTheDay({
 
             <CardContent className="p-0 flex-grow relative bg-black/20">
                 <div className="absolute inset-0 p-0">
-<DuelChat 
-  userAvatar={profile?.avatar_url} 
-  rivalAvatar={opponentProfile?.avatar_url}
-  // 👇 AGREGAR ESTOS DOS DATOS:
-  matchupId={matchup?.id}         // El ID del partido actual
-  currentUserId={profile?.id || ''} // Tu ID para saber cuáles son tus mensajes
-/>
+                    <DuelChat 
+                      userAvatar={profile?.avatar_url} 
+                      rivalAvatar={opponentProfile?.avatar_url}
+                      matchupId={matchup?.id}
+                      currentUserId={profile?.id || ''}
+                      userPlan={profile?.plan_type || 'free'} 
+                    />
                 </div>
             </CardContent>
           </Card>
@@ -917,13 +896,12 @@ export function MatchOfTheDay({
         <div className="flex flex-col gap-4 h-full"> 
           
           <div className="h-52 shrink-0">
-<ProfilePlaceholder 
-  title={`${opponentProfile?.username || '...'}`} 
-  avatarUrl={opponentProfile?.avatar_url}
-  planType={opponentProfile?.plan_type as 'free' | 'plus' | 'premium'} 
-  // 👇 Conectamos la reputación del rival
-  reputation={opponentProfile?.reputation as 'clean' | 'warning' | 'danger' | 'banned'} 
-/>
+            <ProfilePlaceholder 
+              title={`${opponentProfile?.username || '...'}`} 
+              avatarUrl={opponentProfile?.avatar_url}
+              planType={opponentProfile?.plan_type as 'free' | 'premium'} 
+              reputation={opponentProfile?.reputation as 'clean' | 'warning' | 'danger' | 'banned'} 
+            />
           </div>
 
           <Card className="shrink-0"> 
