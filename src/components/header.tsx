@@ -1,8 +1,9 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { Logo } from '@/components/icons';
 import { createClient } from '@/lib/supabase/server';
-import { UserNav } from './user-nav'; 
+import { UserNav } from './user-nav';
+import { NavLinks } from './nav-links';
 import Notifications from './notifications';
 
 export async function Header() {
@@ -10,92 +11,78 @@ export async function Header() {
   const { data: { user } } = await supabase.auth.getUser();
 
   let userProfile = null;
-  
+
   if (user) {
     const { data } = await supabase
       .from('profiles')
-      .select('username, avatar_url, plan_type, reputation') 
+      .select('username, avatar_url, plan_type, reputation')
       .eq('id', user.id)
       .single();
+
     userProfile = data;
   }
 
   return (
     <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/60 shadow-md">
-      <div className="container mx-auto px-6 sm:px-8 lg:px-12 h-24 grid grid-cols-3 items-center">
-        
+<div className="container mx-auto px-6 sm:px-8 lg:px-12 h-24 flex items-center justify-between">
         {/* --- IZQUIERDA: LOGO --- */}
         <div className="flex justify-start items-center">
           <Link
             href="/"
-            className="flex items-center gap-4 group"
+            className="flex items-center group"
             aria-label="Volver a la página de inicio"
           >
-            <Logo className="h-12 w-12 text-primary transition-transform duration-300 group-hover:rotate-6" />
-            <h1 className="text-3xl font-headline font-extrabold text-foreground tracking-tight transition-colors group-hover:text-primary">
-              Global GoalGetters
-            </h1>
+            <div className="relative h-16 w-48 transition-transform duration-300 group-hover:scale-105">
+              <Image
+                src="/assets/draf88.png"
+                alt="Logo Draft8"
+                fill
+                className="object-contain object-left"
+                priority
+              />
+            </div>
           </Link>
         </div>
 
         {/* --- CENTRO: NAVEGACIÓN --- */}
-        <nav className="flex justify-center gap-5">
-          {user && (
-            <>
-              <Button asChild variant="ghost" className="font-medium text-base text-muted-foreground hover:text-primary hover:bg-primary/10 transition">
-                <Link href="/">Inicio</Link>
-              </Button>
-              <Button asChild variant="ghost" className="font-medium text-base text-muted-foreground hover:text-primary hover:bg-primary/10 transition">
-                <Link href="/leagues">Ligas</Link>
-              </Button>
-              <Button asChild variant="ghost" className="font-medium text-base text-muted-foreground hover:text-primary hover:bg-primary/10 transition">
-                <Link href="/dashboard">Dashboard</Link>
-              </Button>
-              <Button asChild variant="ghost" className="font-medium text-base text-muted-foreground hover:text-primary hover:bg-primary/10 transition">
-                <Link href="/rendimiento">Rendimiento</Link>
-              </Button>
-              <Button asChild variant="ghost" className="font-medium text-base text-muted-foreground hover:text-primary hover:bg-primary/10 transition">
-                <Link href="/tienda">Tienda</Link>
-              </Button>
-              <Button 
-                asChild 
-                variant="ghost" 
-                className="font-medium text-base text-muted-foreground hover:text-primary hover:bg-primary/10 transition relative z-20"
-              >
-                <Link href="/fixturemundial">Mundial 2026</Link>
-              </Button>
-            </>
-          )}
-        </nav>
+<nav className="flex items-center justify-center gap-4 lg:gap-6">
+  {user && <NavLinks />}
+</nav>
 
         {/* --- DERECHA: USUARIO / AUTH --- */}
         <div className="flex justify-end items-center gap-4">
           {user ? (
             <>
-              {/* NOTIFICACIONES */}
               <Notifications />
 
-              {/* MENÚ DE USUARIO (Aquí es donde se ve si es Premium o no) */}
-              <UserNav 
-                email={user.email} 
-                username={userProfile?.username} 
+              <UserNav
+                email={user.email}
+                username={userProfile?.username}
                 avatarUrl={userProfile?.avatar_url}
-                // Pasamos el plan tal cual viene de la DB ('free' o 'premium')
-                planType={userProfile?.plan_type} 
-                reputation={userProfile?.reputation} 
+                planType={userProfile?.plan_type}
+                reputation={userProfile?.reputation}
               />
             </>
           ) : (
             <>
-              <Button asChild variant="ghost" className="text-base font-medium text-muted-foreground hover:text-primary hover:bg-primary/10 transition">
+              <Button
+                asChild
+                variant="ghost"
+                className="text-base font-medium text-muted-foreground hover:text-primary hover:bg-primary/10 transition"
+              >
                 <Link href="/login">Iniciar sesión</Link>
               </Button>
-              <Button asChild className="bg-primary text-white text-base px-5 py-2.5 hover:bg-primary/90 transition">
+
+              <Button
+                asChild
+                className="bg-primary text-white text-base px-5 py-2.5 hover:bg-primary/90 transition"
+              >
                 <Link href="/login">Registrarse</Link>
               </Button>
             </>
           )}
         </div>
+
       </div>
     </header>
   );
