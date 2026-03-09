@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { Facebook, Instagram, Twitter, Gamepad2 } from 'lucide-react';
+import { Facebook, Instagram, Gamepad2 } from 'lucide-react';
 
 const TikTokIcon = ({ className }: { className?: string }) => (
   <svg
@@ -11,6 +11,12 @@ const TikTokIcon = ({ className }: { className?: string }) => (
     className={className}
   >
     <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64 2.93 2.93 0 01.88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1-.1z" />
+  </svg>
+);
+
+const XIcon = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
+    <path d="M18.244 2H21l-6.56 7.49L22 22h-6.828l-5.35-6.994L3.8 22H1l7.02-8.014L2 2h6.828l4.84 6.356L18.244 2Zm-2.395 18h1.885L8.17 4H6.15l9.699 16Z" />
   </svg>
 );
 
@@ -43,55 +49,37 @@ export function Footer() {
 
             <ul className="space-y-3 text-muted-foreground">
               <li>
-                <Link
-                  href="/"
-                  className="font-semibold hover:text-primary transition-colors"
-                >
+                <Link href="/" className="font-semibold hover:text-primary transition-colors">
                   Inicio
                 </Link>
               </li>
 
               <li>
-                <Link
-                  href="/leagues"
-                  className="font-semibold hover:text-primary transition-colors"
-                >
+                <Link href="/leagues" className="font-semibold hover:text-primary transition-colors">
                   Ligas
                 </Link>
               </li>
 
               <li>
-                <Link
-                  href="/dashboard"
-                  className="font-semibold hover:text-primary transition-colors"
-                >
+                <Link href="/dashboard" className="font-semibold hover:text-primary transition-colors">
                   Dashboard
                 </Link>
               </li>
 
               <li>
-                <Link
-                  href="/rendimiento"
-                  className="font-semibold hover:text-primary transition-colors"
-                >
+                <Link href="/rendimiento" className="font-semibold hover:text-primary transition-colors">
                   Rendimiento
                 </Link>
               </li>
 
               <li>
-                <Link
-                  href="/tienda"
-                  className="font-semibold hover:text-primary transition-colors"
-                >
+                <Link href="/tienda" className="font-semibold hover:text-primary transition-colors">
                   Tienda
                 </Link>
               </li>
 
               <li>
-                <Link
-                  href="/fixturemundial"
-                  className="font-semibold hover:text-primary transition-colors"
-                >
+                <Link href="/fixturemundial" className="font-semibold hover:text-primary transition-colors">
                   Mundial 2026
                 </Link>
               </li>
@@ -104,28 +92,19 @@ export function Footer() {
 
             <ul className="space-y-3 text-muted-foreground">
               <li>
-                <Link
-                  href="/rules"
-                  className="font-semibold hover:text-primary transition-colors"
-                >
+                <Link href="/rules" className="font-semibold hover:text-primary transition-colors">
                   Reglas del Juego
                 </Link>
               </li>
 
               <li>
-                <Link
-                  href="/faq"
-                  className="font-semibold hover:text-primary transition-colors"
-                >
+                <Link href="/faq" className="font-semibold hover:text-primary transition-colors">
                   Preguntas Frecuentes
                 </Link>
               </li>
 
               <li>
-                <Link
-                  href="/contact"
-                  className="font-semibold hover:text-primary transition-colors"
-                >
+                <Link href="/contact" className="font-semibold hover:text-primary transition-colors">
                   Contacto
                 </Link>
               </li>
@@ -205,12 +184,12 @@ export function Footer() {
             </a>
 
             <a
-              href="https://twitter.com"
+              href="https://x.com"
               target="_blank"
               rel="noopener noreferrer"
               className="text-muted-foreground hover:text-primary transition-colors"
             >
-              <Twitter className="h-6 w-6" />
+              <XIcon className="h-6 w-6" />
             </a>
 
             <a
