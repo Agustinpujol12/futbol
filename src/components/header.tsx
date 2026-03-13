@@ -23,21 +23,26 @@ export async function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/60 shadow-md">
-<div className="container mx-auto px-6 sm:px-8 lg:px-12 h-24 flex items-center justify-between">
+<header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/60 shadow-md">
+      {/* 1. Cambiamos h-24 por h-32 para darle más espacio vertical a la barra */}
+      <div className="container mx-auto px-6 sm:px-8 lg:px-12 h-32 flex items-center justify-between">
+        
         {/* --- IZQUIERDA: LOGO --- */}
         <div className="flex justify-start items-center">
           <Link
             href="/"
-            className="flex items-center group"
+            className="flex items-center group w-fit" 
             aria-label="Volver a la página de inicio"
           >
-            <div className="relative h-16 w-48 transition-transform duration-300 group-hover:scale-105">
+            <div className="transition-transform duration-300 group-hover:scale-105">
               <Image
-                src="/assets/draf88.png"
+                src="/assets/draft8888.png"
                 alt="Logo Draft8"
-                fill
-                className="object-contain object-left"
+                // Aumentamos la resolución base para que no se pixele
+                width={400} 
+                height={128} 
+                // 2. Llevamos el logo de h-20 a h-28 (un salto inmenso en tamaño)
+                className="h-28 w-auto object-contain" 
                 priority
               />
             </div>

@@ -26,18 +26,22 @@ export function Footer() {
       <div className="container mx-auto px-6 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
 
-          {/* Columna 1 */}
+{/* Columna 1 */}
           <div className="flex flex-col space-y-4">
-            <Link href="/" className="relative h-12 w-40">
+            {/* Le agregamos w-fit para ajustar la caja y el efecto de escala al pasar el mouse */}
+            <Link href="/" className="w-fit inline-block transition-transform duration-300 hover:scale-105">
               <Image
-                src="/assets/draf88.png"
+                src="/assets/draft888.png"
                 alt="Logo Draft8"
-                fill
-                className="object-contain object-left"
+                // Sacamos el 'fill' y le damos la resolución base alta
+                width={400}
+                height={128}
+                // Cambiamos h-12 por h-24 (el doble de grande) y w-auto para el ancho perfecto
+                className="h-24 w-auto object-contain object-left"
               />
             </Link>
 
-            <p className="text-muted-foreground leading-relaxed">
+            <p className="text-muted-foreground leading-relaxed mt-2">
               La plataforma definitiva de fútbol fantasy. Arma tu equipo,
               compite en ligas y demuestra que eres el mejor manager.
             </p>
@@ -51,6 +55,13 @@ export function Footer() {
               <li>
                 <Link href="/" className="font-semibold hover:text-primary transition-colors">
                   Inicio
+                </Link>
+              </li>
+
+              {/* NUEVO ENLACE: Cómo Jugar */}
+              <li>
+                <Link href="/como-jugar" className="font-semibold hover:text-primary transition-colors">
+                  Cómo Jugar
                 </Link>
               </li>
 
@@ -166,7 +177,7 @@ export function Footer() {
           <div className="flex items-center gap-6">
 
             <a
-              href="https://instagram.com"
+              href="https://www.instagram.com/draft8_/"
               target="_blank"
               rel="noopener noreferrer"
               className="text-muted-foreground hover:text-primary transition-colors"
@@ -175,7 +186,7 @@ export function Footer() {
             </a>
 
             <a
-              href="https://facebook.com"
+              href="https://www.facebook.com/profile.php?id=61584882519363"
               target="_blank"
               rel="noopener noreferrer"
               className="text-muted-foreground hover:text-primary transition-colors"
@@ -184,7 +195,7 @@ export function Footer() {
             </a>
 
             <a
-              href="https://x.com"
+              href="https://x.com/draft8_"
               target="_blank"
               rel="noopener noreferrer"
               className="text-muted-foreground hover:text-primary transition-colors"

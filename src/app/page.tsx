@@ -121,11 +121,11 @@ export default function LandingPage() {
           <p className="mt-4 max-w-2xl mx-auto text-lg md:text-xl text-slate-200">
             Sumate a la mejor experiencia de fantasy football. Competí en nuestras ligas, llevá tu equipo a la victoria y ganá premios.
           </p>
-          <div className="mt-8">
-            <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold">
-              <Link href="/dashboard">Comenzá Ahora</Link>
-            </Button>
-          </div>
+<div className="mt-8">
+    <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold">
+      <Link href="/como-jugar">¿Cómo jugar?</Link>
+    </Button>
+  </div>
         </div>
       </section>
 
