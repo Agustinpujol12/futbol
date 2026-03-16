@@ -1,16 +1,19 @@
 // src/app/(app)/leagues/page.tsx
+import { Suspense } from 'react'; // <-- 1. Importamos Suspense
 import PaymentListener from './PaymentListener';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Trophy, Crown, Check, Users, Sparkles, Globe, MessageCircle, Eye, RefreshCw, BarChart3, Star } from 'lucide-react';
+import { Crown, Check, Users, Sparkles, Globe, MessageCircle, Eye, RefreshCw, BarChart3, Star } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 export default function LeaguesPage() {
   return (
     <div className="container mx-auto py-12 px-4 sm:px-6 lg:px-8 min-h-[60vh]">
       
-      {/* Listener para cuando integremos los pagos */}
-      <PaymentListener />
+      {/* 👇 2. Envolvemos el listener en Suspense para evitar el error de Vercel */}
+      <Suspense fallback={null}>
+        <PaymentListener />
+      </Suspense>
 
       <div className="mb-16 text-center">
         <h1 className="text-4xl md:text-5xl font-bold tracking-tight font-headline text-foreground">
@@ -68,7 +71,6 @@ export default function LeaguesPage() {
 
         {/* --- TARJETA 2: JUGÁ CON AMIGOS (PREMIUM) --- */}
         <div className="relative h-full">
-          {/* Efecto de brillo de fondo */}
           <div className="absolute -inset-1 bg-gradient-to-r from-yellow-400 to-amber-600 rounded-2xl blur opacity-25 animate-pulse"></div>
           
           <Card className="relative flex flex-col h-full border-yellow-500/50 shadow-2xl bg-gradient-to-b from-zinc-900 via-zinc-950 to-black overflow-hidden">
