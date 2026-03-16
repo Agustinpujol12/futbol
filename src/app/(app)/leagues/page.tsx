@@ -3,7 +3,7 @@ import { Suspense } from 'react';
 import { createClient } from '@/lib/supabase/server';
 import PaymentListener from './PaymentListener';
 import LeagueJoinCard from './LeagueJoinCard';
-import { Countdown } from '@/components/countdown'; // 👈 IMPORTAMOS EL RELOJ REAL
+import { Countdown } from '@/components/countdown';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Lock, Users, Swords, Ticket, MessageSquare, Timer } from 'lucide-react';
@@ -17,8 +17,10 @@ export default async function LeaguesPage() {
   
   let isPremium = false;
   let isAlreadyInLeague = false;
+  let activeLeague = null;
 
   if (user) {
+    // 1. Verificamos si es Premium
     const { data: profile } = await supabase
       .from('profiles')
       .select('plan_type')
@@ -27,23 +29,38 @@ export default async function LeaguesPage() {
 
     isPremium = profile?.plan_type === 'premium' || profile?.plan_type === 'pro';
 
-    const { data: memberRecord } = await supabase
+    // 2. Intentamos buscar si el usuario ya pertenece a una liga
+    const { data: userLeagueMember } = await supabase
       .from('league_members')
-      .select('id')
+      .select('league_id')
       .eq('user_id', user.id)
-      .limit(1)
       .maybeSingle();
 
-    if (memberRecord) isAlreadyInLeague = true;
+    if (userLeagueMember) {
+      // Si ya tiene liga, traemos ESA liga específica (la suya)
+      const { data: myLeague } = await supabase
+        .from('leagues')
+        .select('*')
+        .eq('id', userLeagueMember.league_id)
+        .single();
+      
+      activeLeague = myLeague;
+      isAlreadyInLeague = true;
+    }
   }
 
-  const { data: activeLeague } = await supabase
-    .from('leagues')
-    .select('*')
-    .eq('status', 'forming')
-    .order('created_at', { ascending: true })
-    .limit(1)
-    .single();
+  // 3. Si no tiene liga o no está logueado, buscamos la sala pública activa (la más antigua en 'forming')
+  if (!activeLeague) {
+    const { data: openLeague } = await supabase
+      .from('leagues')
+      .select('*')
+      .eq('status', 'forming')
+      .order('created_at', { ascending: true })
+      .limit(1)
+      .maybeSingle();
+      
+    activeLeague = openLeague;
+  }
 
   const closedLeagues = [
     { id: '101', name: 'Global Draft #101', players: 18 },
@@ -58,6 +75,7 @@ export default async function LeaguesPage() {
         <PaymentListener />
       </Suspense>
 
+      {/* BANNER DEL CONTADOR */}
       <div className="max-w-4xl mx-auto mb-12">
         <div className="bg-card border border-border rounded-xl p-6 flex flex-col md:flex-row items-center justify-center gap-6 shadow-lg relative overflow-hidden">
            <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-red-500 via-orange-500 to-red-500"></div>
@@ -67,9 +85,7 @@ export default async function LeaguesPage() {
              <p className="text-muted-foreground">Tenés tiempo hasta 24hs antes del primer partido del Mundial.</p>
            </div>
            
-           {/* 👇 ACÁ VA EL RELOJ FUNCIONAL */}
            <Countdown />
-
         </div>
       </div>
 
@@ -84,17 +100,17 @@ export default async function LeaguesPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto mb-16">
         
-        {/* 👇 1. PRIMERO PONEMOS LA SALA ACTIVA (A LA IZQUIERDA) */}
+        {/* LA SALA ACTIVA (PROPIA O NUEVA) SIEMPRE PRIMERO A LA IZQUIERDA */}
         {activeLeague ? (
           <LeagueJoinCard activeLeague={activeLeague} isAlreadyInLeague={isAlreadyInLeague} />
         ) : (
           <Card className="bg-muted/50 border-dashed border-2 flex flex-col items-center justify-center p-8 text-center min-h-[350px]">
             <Swords className="h-12 w-12 text-muted-foreground mb-4 opacity-50" />
-            <h3 className="font-bold text-xl mb-2 text-foreground">Generando nueva sala...</h3>
+            <h3 className="font-bold text-xl mb-2 text-foreground">Generando sala...</h3>
           </Card>
         )}
 
-        {/* 👇 2. DESPUÉS LAS LIGAS CERRADAS (A LA DERECHA) */}
+        {/* LIGAS CERRADAS (FICTICIAS) */}
         {closedLeagues.map((league) => (
           <Card key={league.id} className="bg-zinc-950/50 border-zinc-800 opacity-60 grayscale flex flex-col overflow-hidden">
             <CardHeader className="bg-zinc-900 pb-4 pt-6 border-b border-zinc-800 text-center relative">
@@ -123,7 +139,7 @@ export default async function LeaguesPage() {
 
       </div>
 
-      {/* Banner VIP (Sin cambios) */}
+      {/* BANNER VIP */}
       <div className="max-w-5xl mx-auto">
         <div className={`border rounded-xl p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6 transition-all ${isPremium ? 'bg-gradient-to-r from-yellow-600/20 via-yellow-500/10 to-transparent border-yellow-500/30 shadow-lg shadow-yellow-500/5' : 'bg-muted/10 border-border grayscale opacity-80'}`}>
           <div className="flex items-center gap-4">
@@ -160,7 +176,6 @@ export default async function LeaguesPage() {
           </div>
         </div>
       </div>
-
     </div>
   )
 }

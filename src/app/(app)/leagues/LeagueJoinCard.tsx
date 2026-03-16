@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react'
 import Link from 'next/link'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Swords, Users, AlertCircle, CreditCard, Loader2, ArrowRight } from 'lucide-react'
+import { Swords, Users, AlertCircle, CreditCard, Loader2, ArrowRight, CheckCircle2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { useToast } from "@/hooks/use-toast"
 import {
@@ -27,8 +27,13 @@ type League = {
   participant_count: number
 }
 
-// 👇 Agregamos isAlreadyInLeague a las props
-export default function LeagueJoinCard({ activeLeague, isAlreadyInLeague = false }: { activeLeague: League, isAlreadyInLeague?: boolean }) {
+export default function LeagueJoinCard({ 
+  activeLeague, 
+  isAlreadyInLeague = false 
+}: { 
+  activeLeague: League, 
+  isAlreadyInLeague?: boolean 
+}) {
   const [isOpen, setIsOpen] = useState(false)
   const { toast } = useToast()
   const [isPending, startTransition] = useTransition()
@@ -92,18 +97,33 @@ export default function LeagueJoinCard({ activeLeague, isAlreadyInLeague = false
         <p className="text-xs text-muted-foreground mt-3">Esperando jugadores...</p>
       </CardContent>
       
-      <CardFooter className="p-4 pt-0 w-full">
-        {/* 👇 ACÁ SE DEFINE QUÉ BOTÓN SE MUESTRA */}
+      <CardFooter className="p-4 pt-0 w-full flex flex-col gap-3">
         {isAlreadyInLeague ? (
-          <Link href="/dashboard" className="w-full">
-            <Button className="w-full h-12 text-base font-bold bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-700 transition-colors">
-              Ir a mi Dashboard <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
-          </Link>
+          <>
+            {/* ESTADO: YA INSCRIPTO */}
+            <div className="w-full bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-3 flex items-center justify-center gap-2">
+              <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+              <p className="text-emerald-500 text-xs font-bold uppercase tracking-wide">
+                Inscripción Confirmada
+              </p>
+            </div>
+
+            <Link href="/dashboard" className="w-full">
+              <Button className="w-full h-12 text-base font-bold bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-700 transition-all flex items-center justify-center gap-2">
+                Ver mi equipo
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+            </Link>
+            
+            <p className="text-[10px] text-muted-foreground text-center italic">
+              * Ya participas en una liga activa para esta temporada.
+            </p>
+          </>
         ) : (
+          /* ESTADO: DISPONIBLE PARA ENTRAR */
           <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
-              <Button className="w-full h-12 text-base font-bold bg-primary hover:bg-primary/90 text-primary-foreground">
+              <Button className="w-full h-12 text-base font-bold bg-primary hover:bg-primary/90 text-primary-foreground transition-all active:scale-95">
                 Entrar a la Sala
               </Button>
             </DialogTrigger>
@@ -132,17 +152,17 @@ export default function LeagueJoinCard({ activeLeague, isAlreadyInLeague = false
                     handleJoin();
                   }} 
                   disabled={isPending}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold h-14 text-lg transition-colors"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold h-14 text-lg transition-colors shadow-lg shadow-blue-900/20"
                 >
                   {isPending ? (
                     <>
                       <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                      Redirigiendo a Mercado Pago...
+                      Redirigiendo...
                     </>
                   ) : (
                     <>
                       <CreditCard className="w-5 h-5 mr-2" />
-                      Pagar y Entrar a la Liga
+                      Pagar y Entrar
                     </>
                   )}
                 </Button>
