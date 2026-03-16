@@ -1,31 +1,22 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle
-} from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle
-} from "@/components/ui/alert-dialog"
+import Link from 'next/link'
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Swords, Users, AlertCircle, CreditCard, Loader2, ArrowRight } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
 import { useToast } from "@/hooks/use-toast"
-import { Trophy, Users, Coins, CreditCard, Loader2 } from 'lucide-react'
-import { motion } from 'framer-motion'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 
-// 👇 IMPORTANTE: Importamos la acción de Mercado Pago que creamos antes
-// Asegúrate de haber creado el archivo src/app/actions/mercadopago.ts
 import { createLeaguePreference } from '@/app/actions/mercadopago'
 
 type League = {
@@ -36,7 +27,8 @@ type League = {
   participant_count: number
 }
 
-export default function LeagueJoinCard({ league }: { league: League }) {
+// 👇 Agregamos isAlreadyInLeague a las props
+export default function LeagueJoinCard({ activeLeague, isAlreadyInLeague = false }: { activeLeague: League, isAlreadyInLeague?: boolean }) {
   const [isOpen, setIsOpen] = useState(false)
   const { toast } = useToast()
   const [isPending, startTransition] = useTransition()
@@ -44,23 +36,18 @@ export default function LeagueJoinCard({ league }: { league: League }) {
   const handleJoin = async () => {
     startTransition(async () => {
       try {
-        // 1. Llamamos a la Server Action para generar el link de pago
-        // Le pasamos el ID, Nombre y el Precio de la liga
         const paymentUrl = await createLeaguePreference(
-          league.id, 
-          league.name, 
-          league.entry_fee
+          activeLeague.id, 
+          activeLeague.name, 
+          activeLeague.entry_fee
         )
 
         if (paymentUrl) {
-          // 2. Si MP nos devuelve el link, redirigimos al usuario allá
           window.location.href = paymentUrl
         } else {
           throw new Error("No se pudo generar el link de pago.")
         }
-
       } catch (error: any) {
-        // 3. Manejo de errores (ej: usuario no logueado o error de MP)
         toast({
           title: "Error al iniciar pago",
           description: error.message || "Hubo un problema con Mercado Pago.",
@@ -71,113 +58,99 @@ export default function LeagueJoinCard({ league }: { league: League }) {
     })
   }
 
-  const isFull = league.participant_count >= league.max_participants
-  const potentialPrize = league.entry_fee * league.max_participants
+  const fillPercentage = (activeLeague.participant_count / activeLeague.max_participants) * 100
 
   return (
-    <motion.div
-      whileHover={{ scale: 1.03 }}
-      whileTap={{ scale: 0.98 }}
-      transition={{ type: "spring", stiffness: 300, damping: 15 }}
-    >
-      <Card
-        className={`
-          flex flex-col items-center text-center
-          border border-muted shadow-md transition-all
-          hover:shadow-xl hover:border-primary/40
-          rounded-2xl bg-gradient-to-b from-background to-muted/40
-        `}
-      >
-        {/* HEADER */}
-        <CardHeader className="flex flex-col items-center pb-2">
-          <div className="p-4 bg-primary/15 rounded-full mb-3 shadow-inner">
-            <Trophy className="h-10 w-10 text-amber-400" />
-          </div>
-          <CardTitle className="font-headline text-xl tracking-tight">
-            {league.name}
-          </CardTitle>
-        </CardHeader>
-
-        {/* PRECIO */}
-        <div className="flex flex-col items-center mb-2">
-          <div className="flex items-center gap-2 text-4xl font-extrabold text-primary tracking-tight">
-            <Coins className="h-7 w-7 text-amber-500" />
-            <span>${league.entry_fee}</span>
-          </div>
-          <CardDescription className="text-sm text-muted-foreground mt-1">
-            Costo de inscripción
-          </CardDescription>
+    <Card className="bg-card border-primary/50 shadow-[0_0_15px_rgba(2,132,199,0.2)] flex flex-col overflow-hidden relative transform transition-all hover:-translate-y-1 hover:shadow-[0_0_25px_rgba(2,132,199,0.3)]">
+      <div className="absolute top-0 inset-x-0 h-1 bg-primary"></div>
+      <div className="absolute top-3 right-3">
+         <span className="flex h-3 w-3">
+           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+           <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+         </span>
+      </div>
+      
+      <CardHeader className="bg-primary/5 pb-4 pt-6 border-b border-primary/10 text-center">
+        <Swords className="h-10 w-10 text-primary mx-auto mb-2" />
+        <h3 className="font-bold text-foreground font-headline text-lg">{activeLeague.name}</h3>
+        <Badge variant="outline" className="w-fit mx-auto mt-2 border-primary text-primary bg-primary/10">
+          ${activeLeague.entry_fee} USD
+        </Badge>
+      </CardHeader>
+      
+      <CardContent className="py-6 flex flex-col items-center flex-grow">
+        <div className="flex items-center gap-2 text-foreground mb-2">
+          <Users className="h-6 w-6 text-primary" />
+          <span className="text-3xl font-black">{activeLeague.participant_count}<span className="text-xl text-muted-foreground font-medium">/{activeLeague.max_participants}</span></span>
         </div>
-
-        {/* INFO */}
-        <CardContent className="flex flex-col gap-3 items-center text-sm py-2">
-          <div className="flex items-center gap-2">
-            <Users className="h-5 w-5 text-primary" />
-            <span className="font-semibold">
-              {league.participant_count} / {league.max_participants}
-            </span>
-            <span className="text-muted-foreground">jugadores</span>
-          </div>
-
-          <div className="flex items-center gap-2 text-amber-500">
-            <Coins className="h-5 w-5" />
-            <span className="font-semibold">
-              Premios Garantizados: ${potentialPrize.toLocaleString('es-AR')}
-            </span>
-          </div>
-        </CardContent>
-
-        {/* FOOTER Y CONFIRMACIÓN */}
-        <CardFooter className="w-full">
-          <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
-            <Button
-              className="w-full font-medium"
-              variant={isFull ? "secondary" : "default"}
-              onClick={() => !isFull && setIsOpen(true)}
-              disabled={isFull}
-            >
-              {isFull ? "Liga completa" : "Unirme a la Liga"}
+        <div className="w-full bg-muted rounded-full h-3 mt-4 overflow-hidden">
+          <div 
+            className="bg-primary h-3 rounded-full transition-all duration-1000" 
+            style={{ width: `${fillPercentage}%` }}
+          ></div>
+        </div>
+        <p className="text-xs text-muted-foreground mt-3">Esperando jugadores...</p>
+      </CardContent>
+      
+      <CardFooter className="p-4 pt-0 w-full">
+        {/* 👇 ACÁ SE DEFINE QUÉ BOTÓN SE MUESTRA */}
+        {isAlreadyInLeague ? (
+          <Link href="/dashboard" className="w-full">
+            <Button className="w-full h-12 text-base font-bold bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-700 transition-colors">
+              Ir a mi Dashboard <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
-
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle className="font-headline">
-                  Confirmar Inscripción
-                </AlertDialogTitle>
-                <AlertDialogDescription>
-                  Estás a un paso de unirte a <b>{league.name}</b>.
-                  <br /><br />
-                  Serás redirigido a <b>Mercado Pago</b> para abonar la inscripción de <b>${league.entry_fee} ARS</b> de forma segura.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel disabled={isPending}>Cancelar</AlertDialogCancel>
-                {/* Botón de Acción Principal */}
-                <AlertDialogAction 
+          </Link>
+        ) : (
+          <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogTrigger asChild>
+              <Button className="w-full h-12 text-base font-bold bg-primary hover:bg-primary/90 text-primary-foreground">
+                Entrar a la Sala
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md border-border bg-card">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2 text-2xl font-headline">
+                  <AlertCircle className="h-6 w-6 text-primary" />
+                  Asegurá tu lugar
+                </DialogTitle>
+                <DialogDescription className="text-base text-muted-foreground pt-2">
+                  Estás a punto de inscribirte en <strong>{activeLeague.name}</strong>. Para ingresar y participar por el pozo de premios, debés abonar tu Pase Estándar.
+                </DialogDescription>
+              </DialogHeader>
+              
+              <div className="flex items-center justify-center py-6">
+                <div className="text-center bg-muted/30 p-6 rounded-xl border border-border w-full">
+                  <p className="text-sm font-bold text-muted-foreground uppercase mb-2">Costo de Inscripción</p>
+                  <p className="text-5xl font-black text-foreground">${activeLeague.entry_fee} <span className="text-xl text-muted-foreground">USD</span></p>
+                </div>
+              </div>
+              
+              <DialogFooter className="sm:justify-center w-full">
+                <Button 
                   onClick={(e) => {
-                    e.preventDefault(); // Prevenimos cierre automático para mostrar loading
+                    e.preventDefault();
                     handleJoin();
                   }} 
-                  disabled={isPending} 
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  disabled={isPending}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold h-14 text-lg transition-colors"
                 >
                   {isPending ? (
-                     <>
-                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                       Redirigiendo...
-                     </>
+                    <>
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      Redirigiendo a Mercado Pago...
+                    </>
                   ) : (
-                     <>
-                       <CreditCard className="w-4 h-4 mr-2" />
-                       Pagar con Mercado Pago
-                     </>
+                    <>
+                      <CreditCard className="w-5 h-5 mr-2" />
+                      Pagar y Entrar a la Liga
+                    </>
                   )}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </CardFooter>
-      </Card>
-    </motion.div>
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
+      </CardFooter>
+    </Card>
   )
 }
