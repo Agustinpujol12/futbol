@@ -19,7 +19,7 @@ export async function createLeaguePreference(
   // ✅ ESTA ES LA FORMA CORRECTA
   const isProduction = process.env.NODE_ENV === 'production';
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) throw new Error('Debes iniciar sesión.');
