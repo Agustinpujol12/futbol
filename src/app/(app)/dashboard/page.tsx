@@ -1,6 +1,4 @@
 // src/app/(app)/dashboard/page.tsx
-// --- CÓDIGO FINAL CORREGIDO (Columnas: effect_type) ---
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -14,7 +12,11 @@ import { FixtureTab } from "@/components/dashboard/FixtureTab";
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createClient } from '@/lib/supabase/client';
-import { Coins, Users, AlarmClock } from 'lucide-react'; 
+// 👇 IMPORTACIONES CORREGIDAS
+import { Coins, Users, AlarmClock, AlertCircle, Swords, Trophy } from 'lucide-react'; 
+import { Badge } from '@/components/ui/badge';
+import Link from 'next/link';
+
 import {
   type Player,
   type GameDay,
@@ -38,13 +40,13 @@ type Matchup = {
 
 function AestheticCountdownTimer() {
   return (
-    <div className="flex items-center gap-2">
-      <AlarmClock className="h-5 w-5 text-destructive animate-pulse" />
+    <div className="flex items-center gap-3 bg-destructive/10 border border-destructive/20 p-3 rounded-xl px-5 shadow-inner">
+      <AlarmClock className="h-6 w-6 text-destructive animate-pulse" />
       <div className="text-right">
-        <span className="text-xl font-bold font-mono text-destructive">
+        <span className="text-2xl font-black font-mono text-destructive tracking-tight">
           23:15:42
         </span>
-        <p className="text-xs text-muted-foreground -mt-1">
+        <p className="text-xs text-muted-foreground -mt-1 font-medium">
           Cierre de Alineación
         </p>
       </div>
@@ -118,6 +120,10 @@ export default function DashboardPage() {
         setErrorMsg('Error al cargar los detalles de las ligas.');
       } else {
         setLeagues(leaguesData as League[]);
+        // 👇 ESTE ES EL CAMBIO CLAVE: Auto-seleccionamos la liga para que entre directo
+        if (leaguesData && leaguesData.length > 0) {
+          setSelectedLeague(leaguesData[0] as League);
+        }
       }
       setLoadingLeagues(false);
     };
@@ -201,7 +207,6 @@ export default function DashboardPage() {
 
         // 3. Datos del Rival
         if (opponentUserId) {
-          // A. Perfil y Squad
           const { data: oppProfileData } = await supabase.from('profiles').select('*').eq('id', opponentUserId).single();
           setOpponentProfile(oppProfileData);
 
@@ -224,7 +229,6 @@ export default function DashboardPage() {
             setOpponentLineup(oppLineupData || null);
           }
 
-// --- B. CARTA DEL RIVAL (CÓDIGO LIMPIO) ---
           const { data: oppCardData } = await supabase
             .from('user_match_cards')
             .select(`
@@ -295,7 +299,7 @@ export default function DashboardPage() {
           `)
           .eq('user_id', userId)
           .eq('game_day_id', GAME_DAY_ID)
-          .maybeSingle(); // Usamos maybeSingle para seguridad
+          .maybeSingle(); 
 
         if (activeCardData && activeCardData.strategy_cards) {
            const strategies = activeCardData.strategy_cards as any; 
@@ -313,92 +317,86 @@ export default function DashboardPage() {
       }
     };
     fetchLeagueData();
-}, [selectedLeague, userId, supabase, activeTab]);
+  }, [selectedLeague, userId, supabase, activeTab]);
 
   // --- RENDERIZADO ---
+  
+  if (loadingLeagues) {
+    return (
+      <div className="container mx-auto py-20 text-center flex flex-col items-center justify-center gap-4 text-muted-foreground mt-10 min-h-[400px]">
+        <Trophy className="h-12 w-12 text-muted animate-pulse" />
+        <h2 className="text-2xl font-bold font-headline text-foreground">Preparando el vestuario...</h2>
+      </div>
+    );
+  }
+
+  // Si no tiene ligas, le mostramos el mensaje de que vaya a inscribirse
+  if (!selectedLeague && leagues.length === 0) {
+    return (
+      <div className="container mx-auto py-20 text-center flex flex-col items-center justify-center gap-6 border-2 border-dashed rounded-2xl mt-10 min-h-[400px]">
+        <Trophy className="h-16 w-16 text-muted/60" />
+        <div className="max-w-md">
+          <h2 className="text-3xl font-black font-headline text-foreground mb-2">¡Aún no tienes equipo!</h2>
+          <p className="text-muted-foreground mb-8">Necesitas inscribirte en una sala de competición activa para comenzar tu carrera como mánager.</p>
+          <Link href="/leagues">
+            <Button size="lg" className="h-14 px-10 text-lg font-bold transition-all hover:scale-105">
+              Ver Salas Disponibles
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto py-8">
       
-      {/* Header y Grid de Ligas */}
-      <div className="mb-8 text-center">
-        <h1 className="text-4xl font-bold tracking-tight font-headline">Tu Dashboard</h1>
-        <p className="text-muted-foreground max-w-2xl mx-auto mt-2">
-          {selectedLeague ? `Gestionando la liga: ${selectedLeague.name}` : 'Selecciona una liga para ver tu progreso, estadísticas y estrategias.'}
-        </p>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-        {loadingLeagues ? (
-          <p className="col-span-full text-center text-muted-foreground">Cargando tus ligas...</p>
-        ) : leagues.length > 0 ? (
-          leagues.map((league) => (
-            <motion.div key={league.id} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.98 }}>
-              <Card
-                onClick={() => setSelectedLeague(league)}
-                className={`cursor-pointer transition-all rounded-xl ${selectedLeague?.id === league.id ? 'border-2 border-primary shadow-lg bg-primary/5' : 'hover:shadow-md hover:border-primary/30 border border-muted'}`}
-              >
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg font-headline text-center">{league.name || `Liga`}</CardTitle>
-                </CardHeader>
-                <CardContent className="text-center space-y-3">
-                  <div className="flex justify-center items-center gap-2">
-                    <Coins className="w-6 h-6 text-amber-400" />
-                    <p className="text-4xl font-bold text-primary">${league.entry_fee}</p>
-                  </div>
-                  <div className="flex justify-center items-center gap-2 text-sm text-muted-foreground">
-                    <Users className="w-4 h-4 text-sky-400" />
-                    <span>Participantes: <span className="font-semibold text-foreground">{league.max_participants ?? 34}</span></span>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))
-        ) : (
-          <p className="col-span-full text-center text-muted-foreground">Aún no te has unido a ninguna liga.</p>
-        )}
-      </div>
-
-      {/* Panel dinámico */}
       <AnimatePresence mode="wait">
-        {selectedLeague ? (
+        {selectedLeague && (
           <motion.div
             key={selectedLeague.id}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
             transition={{ duration: 0.3 }}
+            className="space-y-8"
           >
-            <Card className="p-6">
-              
-              <CardHeader className="relative">
-                <CardTitle className="text-2xl font-headline text-center flex items-center justify-center gap-2">
-                  <span>{selectedLeague.name || `Liga`}</span>
-                  {!loadingLeagueData && gameDay && (
-                    <span className="text-lg text-primary/80 font-medium">
-                      (Fecha {gameDay.match_day_number})
-                    </span>
-                  )}
-                </CardTitle>
-                
-                <div className="absolute top-6 right-6">
-                  {!loadingLeagueData && gameDay && (
-                    <AestheticCountdownTimer />
-                  )}
-                </div>
-              </CardHeader>
+            {/* --- NUEVO ENCABEZADO "MI EQUIPO" --- */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 p-6 bg-card border rounded-2xl shadow-sm relative overflow-hidden">
+               <Swords className="absolute -left-10 -bottom-10 h-40 w-40 text-muted/10 transform -rotate-12" />
+               
+               <div className="relative z-10">
+                  <h1 className="text-4xl font-black tracking-tight font-headline text-foreground">Mi Equipo</h1>
+                  <div className="flex items-center gap-2 mt-1.5 text-muted-foreground">
+                     <Trophy className="h-4 w-4 text-amber-400" />
+                     <p>Competencia activa: <span className="font-semibold text-foreground">{selectedLeague.name}</span></p>
+                     {gameDay && (
+                        <Badge variant="outline" className="ml-2 border-primary/30 text-primary bg-primary/5">
+                          Fecha {gameDay.match_day_number}
+                        </Badge>
+                     )}
+                  </div>
+               </div>
+               
+               <div className="shrink-0 relative z-10">
+                  {gameDay && <AestheticCountdownTimer />}
+               </div>
+            </div>
 
-              <CardContent>
+            <Card className="p-6">
+              <CardContent className="pt-6">
                 {loadingLeagueData ? (
                   <p className="text-center text-muted-foreground py-10">Cargando datos de la liga...</p>
                 ) : errorMsg ? (
-                  <p className="text-center text-destructive py-6">{errorMsg}</p>
+                  <div className="text-center text-destructive py-6 border-destructive/20 border-2 rounded-xl bg-destructive/5">
+                    <AlertCircle className="h-10 w-10 text-destructive mx-auto mb-4" />
+                    <h2 className="text-xl font-bold mb-2">Hubo un problema</h2>
+                    <p>{errorMsg}</p>
+                  </div>
                 ) : (
-<Tabs 
-  value={activeTab} 
-  onValueChange={setActiveTab} 
-  className="w-full"
->
+                  <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                     
-                    <TabsList className="flex justify-center mb-10 bg-muted/40 p-3 rounded-xl gap-3">
+                    <TabsList className="flex justify-center mb-10 bg-muted/40 p-3 rounded-xl gap-3 flex-wrap h-auto">
                       {[
                         { value: 'alineacion', label: 'Alineación' },
                         { value: 'tabla', label: 'Tabla' },
@@ -409,7 +407,7 @@ export default function DashboardPage() {
                         <TabsTrigger
                           key={tab.value}
                           value={tab.value}
-                          className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary text-muted-foreground font-semibold text-base rounded-lg px-6 py-3 transition-all hover:text-foreground hover:bg-muted/60"
+                          className="data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm text-muted-foreground font-semibold text-base rounded-lg px-6 py-3 transition-all hover:text-foreground"
                         >
                           {tab.label}
                         </TabsTrigger>
@@ -467,30 +465,8 @@ export default function DashboardPage() {
                     </TabsContent>
                   </Tabs>
                 )}
-
-                <div className="flex justify-center mt-10">
-                  <Button
-                    variant="outline"
-                    onClick={() => setSelectedLeague(null)}
-                  >
-                    Volver a seleccionar liga
-                  </Button>
-                </div>
               </CardContent>
             </Card>
-          </motion.div>
-        ) : (
-          <motion.div
-            key="no-league"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="text-center text-muted-foreground py-20 border-2 border-dashed rounded-xl"
-          >
-            <h2 className="text-2xl font-semibold font-headline mb-2">
-              Selecciona una liga para ver tu información
-            </h2>
-            <p>Elige una liga del listado superior para comenzar.</p>
           </motion.div>
         )}
       </AnimatePresence>
