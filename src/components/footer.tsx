@@ -72,8 +72,8 @@ export function Footer() {
               </li>
 
               <li>
-                <Link href="/dashboard" className="font-semibold hover:text-primary transition-colors">
-                  Dashboard
+                <Link href="/mi-equipo" className="font-semibold hover:text-primary transition-colors">
+                  Mi Equipo
                 </Link>
               </li>
 

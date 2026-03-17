@@ -29,8 +29,8 @@ export function NavLinks() {
         Ligas
       </Link>
 
-      <Link href="/dashboard" className={linkClass("/dashboard")}>
-        Dashboard
+      <Link href="/mi-equipo" className={linkClass("/dashboard")}>
+        Mi Equipo
       </Link>
 
       <Link href="/rendimiento" className={linkClass("/rendimiento")}>
