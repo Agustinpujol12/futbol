@@ -14,7 +14,12 @@ export async function createLeaguePreference(
 ) {
   console.log("🔥 GENERANDO LINK PAGO - ID:", leagueId);
 
-  const supabase = await createClient();
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:9002';
+
+  // ✅ ESTA ES LA FORMA CORRECTA
+  const isProduction = process.env.NODE_ENV === 'production';
+
+  const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) throw new Error('Debes iniciar sesión.');
@@ -35,13 +40,15 @@ export async function createLeaguePreference(
         ],
 
         back_urls: {
-          success: `http://localhost:9002/leagues?payment=success&leagueId=${leagueId}`,
-          failure: `http://localhost:9002/leagues?payment=failure&leagueId=${leagueId}`,
-          pending: `http://localhost:9002/leagues?payment=pending&leagueId=${leagueId}`,
+          success: `${baseUrl}/leagues?payment=success&leagueId=${leagueId}`,
+          failure: `${baseUrl}/leagues?payment=failure&leagueId=${leagueId}`,
+          pending: `${baseUrl}/leagues?payment=pending&leagueId=${leagueId}`,
         },
 
-        // 👇 LO APAGAMOS TEMPORALMENTE PARA QUE NO FALLE EN LOCAL
-        // auto_return: 'approved',
+        // ✅ SOLO EN PRODUCCIÓN REAL
+        ...(isProduction && {
+          auto_return: 'approved',
+        }),
 
         external_reference: JSON.stringify({
           userId: user.id,
