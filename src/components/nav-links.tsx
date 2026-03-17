@@ -30,7 +30,7 @@ export function NavLinks() {
       </Link>
 
       <Link href="/mi-equipo" className={linkClass("/dashboard")}>
-        Mi Equipo
+        Mi Equipoo
       </Link>
 
       <Link href="/rendimiento" className={linkClass("/rendimiento")}>
